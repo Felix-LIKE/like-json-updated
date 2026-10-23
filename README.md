@@ -1,11 +1,19 @@
 LIKE-JSON Plugin fuer Wordpress
 =========
-Version 1.5.3 (Stand 07.05.2021)
+Version 1.6.0 (Stand 23.10.2026)
 
 Einbinden von Daten aus dem System des Lehrstuhls fuer Informationstechnik mit dem Schwerpunkt Kommunikationselektronik (LIKE).
 Aktuell werden folgende Daten unterstuetzt:
 
 Studentische Arbeiten
+
+Voraussetzungen
+==========
+- PHP 8.0 oder neuer (getestet mit PHP 8.5)
+- WordPress 6.0 oder neuer
+
+Hinweis: Dies ist ein Update des Plugins fuer aktuelle PHP-Versionen (PHP 8.x).
+Das Original-Plugin von Joelx/like-json ist unter https://github.com/Joelx/like-json verfuegbar.
 
 
 Shortcodes

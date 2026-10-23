@@ -31,11 +31,14 @@ function build_html_list($arr, $ressources) {
 						if ($ressources == 'link') {
 							$pdf_ressource = esc_url( $arr[$i]['pdf'] );
 						} else {
-							try {
-								$pdf_ressource = "data:application/pdf;base64," . chunk_split(base64_encode(wp_remote_retrieve_body(wp_safe_remote_get(esc_url( $arr[$i]['pdf'] )))));
-							} catch (Exception $e) {
+							// wp_safe_remote_get liefert bei Fehlern ein WP_Error-Objekt zurueck und wirft keine Exception.
+							// wp_remote_retrieve_body() liefert dann einen leeren String, der hier abgefangen wird.
+							$pdf_body = wp_remote_retrieve_body(wp_safe_remote_get(esc_url( $arr[$i]['pdf'] )));
+							if (!empty($pdf_body)) {
+								$pdf_ressource = "data:application/pdf;base64," . chunk_split(base64_encode($pdf_body));
+							} else {
 								$pdf_ressource = esc_url( $arr[$i]['pdf'] );
-							}							
+							}
 						}
 						$output .= '<li><b>PDF: </b>' . '<a class="mtli_attachment mtli_pdf" href="' . $pdf_ressource . '" download="Aushang.pdf">Aushang</a></li>';
 					}	
@@ -50,8 +53,6 @@ function build_html_list($arr, $ressources) {
 
 
 function build_wp_accordion($arr, $accordion_count, $ressources) {
-	$collapse_count = 0;
-	
 	$output = '';
 	$output .= '[collapsibles]';
 	
@@ -78,11 +79,12 @@ function build_wp_accordion($arr, $accordion_count, $ressources) {
 					if ($ressources == 'link') {
 						$pdf_ressource = esc_url( $arr[$i]['pdf'] );
 					} else {
-						try {
-							$pdf_ressource = "data:application/pdf;base64," . chunk_split(base64_encode(wp_remote_retrieve_body(wp_safe_remote_get(esc_url( $arr[$i]['pdf'] )))));
-						} catch (Exception $e) {
+						$pdf_body = wp_remote_retrieve_body(wp_safe_remote_get(esc_url( $arr[$i]['pdf'] )));
+						if (!empty($pdf_body)) {
+							$pdf_ressource = "data:application/pdf;base64," . chunk_split(base64_encode($pdf_body));
+						} else {
 							$pdf_ressource = esc_url( $arr[$i]['pdf'] );
-						}							
+						}
 					}
 					$output .= '<li><b>PDF: </b>' . '<a class="mtli_attachment mtli_pdf" href="' . $pdf_ressource . '" download="Aushang.pdf">Aushang</a></li>';
 				}	
@@ -90,8 +92,6 @@ function build_wp_accordion($arr, $accordion_count, $ressources) {
 		$output .= '</ul>';
 		$output .= '[/collapse]';
 		
-		$collapse_count++;
-
 	}	
 	$output .= '[/collapsibles]';
 	

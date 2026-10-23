@@ -40,8 +40,8 @@ if (! function_exists('array_column')) {
  *  in zukuenftigen Versionen unterstuetzt.
  */
 abstract class Json_Data {
-	private $json_urls = NULL;
-	private $format = NULL;
+	protected $json_urls = NULL;
+	protected $format = NULL;
 	
 	abstract protected function get_data();
 
@@ -54,7 +54,9 @@ abstract class Json_Data {
 class Studentische_Arbeiten extends Json_Data {
     
     private $id = NULL;
-	private $task = NULL;
+    private $task = NULL;
+    private $advisor = NULL;
+    private $status = NULL;
     
     function __construct($json_urls, $id, $task, $format, $advisor, $status) {
         $this->id = $id;
@@ -71,7 +73,12 @@ class Studentische_Arbeiten extends Json_Data {
     public function get_data() {
         
         if (!empty($this->json_urls)) {
-            $data = json_decode(wp_remote_retrieve_body(wp_safe_remote_get($this->json_urls)), true);            
+            $data = json_decode(wp_remote_retrieve_body(wp_safe_remote_get($this->json_urls)), true);
+            // Falls die entfernte JSON-Quelle kein (gueltiges) Array zurueckliefert,
+            // dann ist keine Verarbeitung moeglich.
+            if (!is_array($data)) {
+                $data = '';
+            }
             //print_r($data);
         } else {
             echo "Keine URL";
@@ -79,7 +86,7 @@ class Studentische_Arbeiten extends Json_Data {
         }          
         
 		// Falls ID als Parameter uebergeben wurde, filtere nach dieser.
-		if ($this->id != '') {			
+		if ($this->id != '' && is_array($data)) {			
 			$key = array_search($this->id, array_column($data, 'id'));
             if ($key === false) {
                 $data = "";
@@ -94,12 +101,12 @@ class Studentische_Arbeiten extends Json_Data {
 		}    
 		
 		// Falls Advisor als Parameter uebergeben wurde, filtere nach diesem Betreuer.
-		if ($this->advisor != '') {
+		if ($this->advisor != '' && is_array($data)) {
 			$tmp = $data;
 			$data = array();
 			$i = 0;
 			foreach($tmp as $array) {
-				if (stripos($array['betreuer'], $this->advisor))	{
+				if (isset($array['betreuer']) && stripos($array['betreuer'], $this->advisor) !== false)	{
 					$data[$i] = $array;
 					$i++;
 				}				
@@ -111,12 +118,12 @@ class Studentische_Arbeiten extends Json_Data {
 		}    
 		
 	     // Falls Status als Parameter uebergeben wurde, filtere nach diesem Vergabestatus.
-		if ($this->status != '') {
+		if ($this->status != '' && is_array($data)) {
 			$tmp = $data;
 			$data = array();
 			$i = 0;            
 			foreach($tmp as $array) {                
-				if ($this->status == substr($array['status'], 0, strlen($array['status'])))	{
+				if (isset($array['status']) && $this->status == substr($array['status'], 0, strlen($array['status'])))	{
                     
 					$data[$i] = $array;
 					$i++;
@@ -176,13 +183,13 @@ class Studentische_Arbeiten_Alle extends Json_Data {
 		if (count($this->json_urls) > 1) {    
 			$data = array();
 			foreach ($this->json_urls as $key => $url) {
-				$data[$key] = json_decode(wp_remote_retrieve_body(wp_safe_remote_get($url)), true); 
+				$body = json_decode(wp_remote_retrieve_body(wp_safe_remote_get($url)), true);
+				// Nur tatsaechlich vorhandene Daten uebernehmen, damit count(array_filter()) korrekt arbeitet.
+				$data[$key] = is_array($body) ? $body : '';
 			}
 		} else {
-			$stud_arbeit = new Studentische_Arbeit($this->json_urls, '');
+			$stud_arbeit = new Studentische_Arbeiten($this->json_urls, '', '', '', '', '');
 			$data = $stud_arbeit->get_data();
-			// TODO: Object von Studentische_Arbeit erzeugen.
-			// Ueberlegen welche create html aufgerufen werden soll
 		}
 		//print_r($data);
 		return $data;
@@ -192,10 +199,14 @@ class Studentische_Arbeiten_Alle extends Json_Data {
 		$output = '';
 		$accordion_count = 0;
 		
-		if (count(array_filter($data)) == 0) {
+		if ( !is_array($data) || count(array_filter($data)) == 0) {
 			$output = '';
 		} else {					
 			foreach ($data as $heading => $arr) {
+				// Ueberspringt Quellen, die keine (gueltigen) Daten geliefert haben.
+				if (!is_array($arr)) {
+					continue;
+				}
 				//$output .= '<div><h2>' . ucfirst($heading) . '</h2>';
 				switch($this->format) {
 					case 'accordion': 						

@@ -2,8 +2,8 @@
 
 /*
   Plugin Name: LIKE-Json
-  Plugin URI: https://github.com/Joelx/like-json
-  Version: 1.5.3
+  Plugin URI: https://github.com/Felix-LIKE/like-json-updated
+  Version: 1.6.0
   Description: Dient der Ausgabe von studentischen Arbeiten aus der LIKE Datenbank.
   Author: LIKE
   Author URI: 
@@ -54,9 +54,9 @@ class LIKE_Json {
     const option_name = 'like_json'; 
     const version_option_name = '_like_json_version';
     const textdomain = 'like-json';
-    const version = '1.5.3';
-    const php_version = '5.4';
-    const wp_version = '4.5';
+    const version = '1.6.0';
+    const php_version = '8.0';
+    const wp_version = '6.0';
     protected static $options;
     protected $admin_settings_page;
     protected static $instance = null; 
@@ -169,10 +169,9 @@ class LIKE_Json {
 			'status' => '',
 			'ressources' => 'base64'
         );
-        $atts = shortcode_atts($default, $atts);       
-        extract($atts);
+        $atts = shortcode_atts($default, $atts);
         
-	    return $this->get_content($task, $id, $format, $advisor, $status, $ressources); 
+	    return $this->get_content($atts['task'], $atts['id'], $atts['format'], $atts['advisor'], $atts['status'], $atts['ressources']); 
     }
 
     /*
