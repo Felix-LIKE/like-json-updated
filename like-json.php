@@ -3,7 +3,7 @@
 /*
   Plugin Name: LIKE-Json
   Plugin URI: https://github.com/Felix-LIKE/like-json-updated
-  Version: 1.6.0
+  Version: 1.6.1
   Description: Dient der Ausgabe von studentischen Arbeiten aus der LIKE Datenbank.
   Author: LIKE
   Author URI: 
@@ -54,14 +54,28 @@ class LIKE_Json {
     const option_name = 'like_json'; 
     const version_option_name = '_like_json_version';
     const textdomain = 'like-json';
-    const version = '1.6.0';
+    const version = '1.6.1';
     const php_version = '8.0';
     const wp_version = '6.0';
     protected static $options;
     protected $admin_settings_page;
     protected static $instance = null; 
 	
-	private $source = 'http://like35.like.e-technik.uni-erlangen.de/json/'; 
+	// Standard-Quelle: HTTPS wird bevorzugt (Server hat ein gueltiges Zertifikat).
+	// Kann in den Einstellungen des Plugins geaendert werden.
+	private $source = 'https://like35.like.e-technik.uni-erlangen.de/json/'; 
+	
+	/*
+	 * Liefert die JSON-Quell-URL. Falls in den Einstellungen eine eigene
+	 * Quelle hinterlegt ist, wird diese verwendet.
+	 * @return string
+	 */
+	private function get_source() {
+		if ( ! empty(self::$options) && ! empty(self::$options->source_url) ) {
+			return rtrim(self::$options->source_url, '/') . '/';
+		}
+		return $this->source;
+	}
 
     /*
      * Erstellt und gibt eine Instanz der Klasse zurück.
@@ -117,33 +131,34 @@ class LIKE_Json {
 	 */
     public function get_content($task = '', $id='', $format='', $advisor='', $status='', $ressources='') { 
         $json_urls = array();
+        $source = $this->get_source();
         switch ($task) {
             case 'masterarbeiten':
-				$json_url = $this->source . "masterarbeiten"; 
+				$json_url = $source . "masterarbeiten"; 
 				$task_object = new Studentische_Arbeiten($json_url, $id, $task, $format, $advisor, $status); 
 				break;
             case 'bachelorarbeiten':
-				$json_url = $this->source . "bachelorarbeiten"; 
+				$json_url = $source . "bachelorarbeiten"; 
                 $task_object = new Studentische_Arbeiten($json_url, $id, $task, $format, $advisor, $status);
                 break;
             case 'forschungspraktika':
-				$json_url = $this->source . "forschungspraktika"; 
+				$json_url = $source . "forschungspraktika"; 
                 $task_object = new Studentische_Arbeiten($json_url, $id, $task, $format, $advisor, $status);
                 break;	
             case 'projektarbeiten':
-				$json_url = $this->source . "projektarbeiten"; 
+				$json_url = $source . "projektarbeiten"; 
                 $task_object = new Studentische_Arbeiten($json_url, $id, $task, $format, $advisor, $status);
                 break;	
             case 'sonstiges':
-				$json_url = $this->source . "sonstiges"; 
+				$json_url = $source . "sonstiges"; 
                 $task_object = new Studentische_Arbeiten($json_url, $id, $task, $format, $advisor, $status);
                 break;						
             case 'arbeiten-alle':
-				$json_urls['bachelorarbeiten'] = $this->source . "bachelorarbeiten";
-                $json_urls['masterarbeiten'] = $this->source . "masterarbeiten";
-				$json_urls['forschungspraktika'] = $this->source . "forschungspraktika";
-				$json_urls['projektarbeiten'] = $this->source . "projektarbeiten";
-				$json_urls['sonstiges'] = $this->source . "sonstiges";
+				$json_urls['bachelorarbeiten'] = $source . "bachelorarbeiten";
+                $json_urls['masterarbeiten'] = $source . "masterarbeiten";
+				$json_urls['forschungspraktika'] = $source . "forschungspraktika";
+				$json_urls['projektarbeiten'] = $source . "projektarbeiten";
+				$json_urls['sonstiges'] = $source . "sonstiges";
                 $task_object = new Studentische_Arbeiten_Alle($json_urls, $format);
                 break;
             default:
@@ -243,6 +258,7 @@ class LIKE_Json {
     private static function default_options() {
         $options = array(
             'like_json_field_1' => '',
+            'source_url' => 'https://like35.like.e-technik.uni-erlangen.de/json/',
             // Hier können weitere Felder ('key' => 'value') angelegt werden.
         );
 
@@ -299,6 +315,7 @@ class LIKE_Json {
         register_setting('like_json_options', self::option_name, array($this, 'options_validate'));
         add_settings_section('like_json_section_1', false, '__return_false', 'like_json_options');
         add_settings_field('like_json_field_1', __('Feld 1', self::textdomain), array($this, 'like_json_field_1'), 'like_json_options', 'like_json_section_1');
+        add_settings_field('like_json_source_url', __('JSON-Quelle (URL)', self::textdomain), array($this, 'like_json_source_url'), 'like_json_options', 'like_json_section_1');
     }
 
     /*
@@ -308,6 +325,10 @@ class LIKE_Json {
      */
     public function options_validate($input) {
         $input['like_json_text'] = !empty($input['like_json_field_1']) ? $input['like_json_field_1'] : '';
+        // Quelle auf eine saubere, absolute URL begrenzen.
+        if ( ! empty($input['source_url']) ) {
+            $input['source_url'] = esc_url_raw( $input['source_url'] );
+        }
         return $input;
     }
 
@@ -318,6 +339,18 @@ class LIKE_Json {
     public function like_json_field_1() {
         ?>
         <input type='text' name="<?php printf('%s[like_json_field_1]', self::option_name); ?>" value="<?php echo self::$options->like_json_field_1; ?>">
+        <?php
+    }
+
+    /*
+     * Feld fuer die JSON-Quell-URL
+     * @return void
+     */
+    public function like_json_source_url() {
+        $value = ! empty( self::$options->source_url ) ? self::$options->source_url : 'https://like35.like.e-technik.uni-erlangen.de/json/';
+        ?>
+        <input type='url' size="60" name="<?php printf('%s[source_url]', self::option_name); ?>" value="<?php echo esc_attr( $value ); ?>">
+        <p class="description"><?php _e('Basis-URL der JSON-Daten (ohne Endpunktname, z. B. "bachelorarbeiten").', self::textdomain); ?></p>
         <?php
     }
 

@@ -5,6 +5,68 @@
  *  Wird hier benutzt, um Datensaetze nach bestimmer ID zu filtern. 
  *
  */
+
+/*
+ * Liefert den Pfad zum mitgelieferten Intermediate-Zertifikat (GEANT TLS ECC 1),
+ * das der LIKE-Server selbst nicht mitsendet. Damit die HTTPS-Verbindung auch
+ * auf Hosts funktioniert, die das Zertifikat nicht im System-Trust-Store haben.
+ *
+ * @return string|false
+ */
+function like_json_intermediate_cert() {
+    $cert = dirname(__FILE__) . '/certs/GEANT-TLS-ECC-1.pem';
+    return ( file_exists($cert) ) ? $cert : false;
+}
+
+/*
+ * Setzt CURLOPT_CAINFO fuer die Requests dieses Plugins auf das mitgelieferte
+ * Intermediate-Zertifikat. Getestet: curl baut daraus die Kette zum Root auf.
+ *
+ * @param resource $handle  cURL-Handle
+ */
+function like_json_set_cainfo($handle) {
+    $cert = like_json_intermediate_cert();
+    if ( $cert ) {
+        curl_setopt($handle, CURLOPT_CAINFO, $cert);
+        // Kein Fallback auf unsichere Verifizierung.
+        curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($handle, CURLOPT_SSL_VERIFYHOST, 2);
+    }
+}
+
+/*
+ * Holt den JSON-Body von einer URL.
+ *
+ * Bevorzugt HTTPS. Da der LIKE-Server sein Intermediate-Zertifikat nicht
+ * mitsendet (GEANT TLS ECC 1), kann die SSL-Verifikation auf manchen Hosts
+ * fehlschlagen - in dem Fall wird auf die (weiterhin verfuegbare) HTTP-Quelle
+ * zurueckgegriffen.
+ *
+ * @param string $url
+ * @return string
+ */
+function like_json_fetch_body($url) {
+    $url_http = preg_replace('#^https://#i', 'http://', $url);
+
+    // CAINFO-Filter nur fuer diesen Request registrieren.
+    add_filter('http_api_curl', 'like_json_set_cainfo');
+
+    // 1. Versuch: HTTPS
+    if ($url !== $url_http) {
+        $response = wp_safe_remote_get($url);
+        $body = wp_remote_retrieve_body($response);
+        if ( ! empty($body) ) {
+            remove_filter('http_api_curl', 'like_json_set_cainfo');
+            return $body;
+        }
+    }
+
+    // 2. Versuch: HTTP (fuer Hosts ohne das Intermediate-Zertifikat im Trust-Store)
+    $response = wp_safe_remote_get($url_http);
+    remove_filter('http_api_curl', 'like_json_set_cainfo');
+    return wp_remote_retrieve_body($response);
+}
+
 if (! function_exists('array_column')) {
     function array_column(array $input, $columnKey, $indexKey = null) {
         $array = array();
@@ -73,7 +135,7 @@ class Studentische_Arbeiten extends Json_Data {
     public function get_data() {
         
         if (!empty($this->json_urls)) {
-            $data = json_decode(wp_remote_retrieve_body(wp_safe_remote_get($this->json_urls)), true);
+            $data = json_decode(like_json_fetch_body($this->json_urls), true);
             // Falls die entfernte JSON-Quelle kein (gueltiges) Array zurueckliefert,
             // dann ist keine Verarbeitung moeglich.
             if (!is_array($data)) {
@@ -183,7 +245,7 @@ class Studentische_Arbeiten_Alle extends Json_Data {
 		if (count($this->json_urls) > 1) {    
 			$data = array();
 			foreach ($this->json_urls as $key => $url) {
-				$body = json_decode(wp_remote_retrieve_body(wp_safe_remote_get($url)), true);
+				$body = json_decode(like_json_fetch_body($url), true);
 				// Nur tatsaechlich vorhandene Daten uebernehmen, damit count(array_filter()) korrekt arbeitet.
 				$data[$key] = is_array($body) ? $body : '';
 			}

@@ -31,9 +31,10 @@ function build_html_list($arr, $ressources) {
 						if ($ressources == 'link') {
 							$pdf_ressource = esc_url( $arr[$i]['pdf'] );
 						} else {
-							// wp_safe_remote_get liefert bei Fehlern ein WP_Error-Objekt zurueck und wirft keine Exception.
-							// wp_remote_retrieve_body() liefert dann einen leeren String, der hier abgefangen wird.
-							$pdf_body = wp_remote_retrieve_body(wp_safe_remote_get(esc_url( $arr[$i]['pdf'] )));
+							// like_json_fetch_body() prueft HTTPS und faellt bei SSL-Problemen
+							// auf HTTP zurueck. Fehlerhafte/leere Antworten ergeben
+							// einen normalen Link statt eines kaputten base64-Blobs.
+							$pdf_body = like_json_fetch_body(esc_url( $arr[$i]['pdf'] ));
 							if (!empty($pdf_body)) {
 								$pdf_ressource = "data:application/pdf;base64," . chunk_split(base64_encode($pdf_body));
 							} else {
@@ -79,7 +80,7 @@ function build_wp_accordion($arr, $accordion_count, $ressources) {
 					if ($ressources == 'link') {
 						$pdf_ressource = esc_url( $arr[$i]['pdf'] );
 					} else {
-						$pdf_body = wp_remote_retrieve_body(wp_safe_remote_get(esc_url( $arr[$i]['pdf'] )));
+						$pdf_body = like_json_fetch_body(esc_url( $arr[$i]['pdf'] ));
 						if (!empty($pdf_body)) {
 							$pdf_ressource = "data:application/pdf;base64," . chunk_split(base64_encode($pdf_body));
 						} else {
