@@ -1,0 +1,38 @@
+/**
+ * LIKE-Json block styles (editor + frontend).
+ *
+ * Scoped to the like-json classes; never modifies other blocks.
+ *
+ * @package LIKE_Json
+ */
+
+.like-json-list,
+.like-json-record,
+.like-json-record ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.like-json-list > .like-json-record {
+	margin-bottom: 1.5em;
+}
+
+.like-json-record li {
+	margin-bottom: 0.25em;
+}
+
+.like-json-title {
+	font-weight: 600;
+	margin-bottom: 0.5em;
+}
+
+.like-json-heading {
+	font-size: 1.2em;
+	margin-top: 1.5em;
+	margin-bottom: 0.5em;
+}
+
+.like-json-empty {
+	font-style: italic;
+}

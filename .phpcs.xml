@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<ruleset name="like-json">
+    <description>WordPress Coding Standards for LIKE-Json.</description>
+
+    <file>.</file>
+
+    <!-- Exclude build artifacts, vendor, JS source, JS tooling, translations -->
+    <exclude-pattern>build/*</exclude-pattern>
+    <exclude-pattern>vendor/*</exclude-pattern>
+    <exclude-pattern>node_modules/*</exclude-pattern>
+    <exclude-pattern>languages/*</exclude-pattern>
+    <exclude-pattern>bin/*</exclude-pattern>
+    <!-- JavaScript is linted with wp-scripts (eslint), not PHPCS -->
+    <exclude-pattern>src/*</exclude-pattern>
+    <!-- Test mocks use intentionally terse WP stubs; excluded from the
+         production code standard. See tests/README.md. -->
+    <exclude-pattern>tests/*</exclude-pattern>
+
+    <!-- WordPress standard -->
+    <rule ref="WordPress" />
+
+    <!-- PHP compatibility: require PHP 8.0+ -->
+    <config name="testVersion" value="8.0-" />
+    <rule ref="PHPCompatibility" />
+
+    <!--
+      PSR-4 class/file naming (required by the RRZE SPEC) overrides the
+      WordPress "class-" + lowercase file naming convention. Class files map
+      1:1 to class names for the project-local autoloader.
+    -->
+    <rule ref="WordPress.Files.FileName">
+        <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+    </rule>
+
+    <!-- Show progress -->
+    <arg value="sp"/>
+</ruleset>

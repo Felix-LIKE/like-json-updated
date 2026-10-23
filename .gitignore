@@ -1,0 +1,22 @@
+# Node / npm
+node_modules/
+
+# Composer
+vendor/
+bin/composer
+# composer.lock IS committed (reproducible dev tooling builds)
+
+# Source maps (never ship in production, but build/ itself IS committed)
+*.map
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.log
+
+# Local WordPress installs (for local testing only)
+wp-content/

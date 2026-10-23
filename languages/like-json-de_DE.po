@@ -1,0 +1,107 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: LIKE-Json 2.0.0\n"
+"Report-Msgid-Bugs-To: like-admin@fau.de\n"
+"Last-Translator: LIKE <like-admin@fau.de>\n"
+"Language-Team: LIKE <like-admin@fau.de>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-10-23 12:30+0100\n"
+"PO-Revision-Date: 2026-10-23 12:30+0100\n"
+"Language: de_DE\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: like-json 2.0.0\n"
+"X-Domain: like-json\n"
+
+#: includes/API/Works.php:60
+msgid "Bachelorarbeiten"
+msgstr "Bachelorarbeiten"
+
+#: includes/API/Works.php:61
+msgid "Masterarbeiten"
+msgstr "Masterarbeiten"
+
+#: includes/API/Works.php:62
+msgid "Forschungspraktika"
+msgstr "Forschungspraktika"
+
+#: includes/API/Works.php:63
+msgid "Projektarbeiten"
+msgstr "Projektarbeiten"
+
+#: includes/API/Works.php:64
+msgid "Sonstige Arbeiten"
+msgstr "Sonstige Arbeiten"
+
+#: includes/API/Formatter.php:93
+msgid "Themenbeschreibung"
+msgstr "Themenbeschreibung"
+
+#: includes/API/Formatter.php:94
+msgid "Themengebiete"
+msgstr "Themengebiete"
+
+#: includes/API/Formatter.php:95
+msgid "Voraussetzungen"
+msgstr "Voraussetzungen"
+
+#: includes/API/Formatter.php:96
+msgid "Betreuer"
+msgstr "Betreuer"
+
+#: includes/API/Formatter.php:97
+msgid "Hochschullehrer"
+msgstr "Hochschullehrer"
+
+#: includes/API/Formatter.php:119
+msgid "Aufgaben"
+msgstr "Aufgaben"
+
+#: includes/API/Formatter.php:134
+msgid "PDF"
+msgstr "PDF"
+
+#: includes/API/Formatter.php:142
+msgid "Aushang"
+msgstr "Aushang"
+
+#: includes/Blocks/Blocks.php:88
+msgid "Keine Einträge gefunden."
+msgstr "Keine Einträge gefunden."
+
+#: includes/Admin/SettingsPage.php:117
+msgid "LIKE-Json Einstellungen"
+msgstr "LIKE-Json Einstellungen"
+
+#: includes/Admin/SettingsPage.php:134
+msgid "LIKE-Json Netzwerkeinstellungen"
+msgstr "LIKE-Json Netzwerkeinstellungen"
+
+#: includes/Admin/SettingsPage.php:112
+msgid "Sie haben nicht die erforderliche Berechtigung."
+msgstr "Sie haben nicht die erforderliche Berechtigung."
+
+#: includes/Admin/SettingsPage.php:170
+msgid "JSON-Quelle (URL)"
+msgstr "JSON-Quelle (URL)"
+
+#: includes/Admin/SettingsPage.php:172
+msgid "Basis-URL der JSON-Daten (ohne Endpunktnamen wie \"bachelorarbeiten\")."
+msgstr "Basis-URL der JSON-Daten (ohne Endpunktnamen wie \"bachelorarbeiten\")."
+
+#: includes/Admin/SettingsPage.php:180
+msgid "Timeout (Sekunden)"
+msgstr "Timeout (Sekunden)"
+
+#: includes/Admin/SettingsPage.php:182
+msgid "Maximale Wartezeit für Remote-Anfragen."
+msgstr "Maximale Wartezeit für Remote-Anfragen."
+
+#: includes/Admin/SettingsPage.php:190
+msgid "User-Agent"
+msgstr "User-Agent"
+
+#: includes/Admin/SettingsPage.php:192
+msgid "RRZE-konformer User-Agent für automatisierte Abrufe."
+msgstr "RRZE-konformer User-Agent für automatisierte Abrufe."

@@ -1,188 +1,107 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: CMS-Basis\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-01 14:45+0100\n"
-"PO-Revision-Date: \n"
-"Last-Translator: \n"
-"Language-Team: RRZE-Webteam <webmaster@rrze.fau.de>\n"
-"Language: en_US\n"
+"Project-Id-Version: LIKE-Json 2.0.0\n"
+"Report-Msgid-Bugs-To: like-admin@fau.de\n"
+"Last-Translator: LIKE <like-admin@fau.de>\n"
+"Language-Team: LIKE <like-admin@fau.de>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-KeywordsList: __;_e;__ngettext:1,2;_n:1,2;__ngettext_noop:1,2;"
-"_n_noop:1,2;_c,_nc:4c,1,2;_x:1,2c;_nx:4c,1,2;_nx_noop:4c,1,2;_ex:1,2c;"
-"esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
-"X-Poedit-Basepath: .\n"
-"X-Poedit-SourceCharset: UTF-8\n"
+"POT-Creation-Date: 2026-10-23 12:30+0100\n"
+"PO-Revision-Date: 2026-10-23 12:30+0100\n"
+"Language: en_US\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.6.5\n"
-"X-Poedit-SearchPath-0: .\n"
-"X-Poedit-SearchPath-1: ..\n"
+"X-Generator: like-json 2.0.0\n"
+"X-Domain: like-json\n"
 
-#: ../cms-basis.php:167
-#, php-format
-msgid ""
-"Ihre PHP-Version %s ist veraltet. Bitte aktualisieren Sie mindestens auf die "
-"PHP-Version %s."
-msgstr ""
-"Your server is running PHP version %s. Please upgrade at least to PHP "
-"version %s."
+#: includes/API/Works.php:60
+msgid "Bachelorarbeiten"
+msgstr "Bachelor theses"
 
-#: ../cms-basis.php:171
-#, php-format
-msgid ""
-"Ihre Wordpress-Version %s ist veraltet. Bitte aktualisieren Sie mindestens "
-"auf die Wordpress-Version %s."
-msgstr ""
-"Your Wordpress version is %s. Please upgrade at least to Wordpress version "
-"%s."
+#: includes/API/Works.php:61
+msgid "Masterarbeiten"
+msgstr "Master theses"
 
-#: ../cms-basis.php:213
-msgid "CMS-Basis"
-msgstr "CMS Basis"
+#: includes/API/Works.php:62
+msgid "Forschungspraktika"
+msgstr "Research internships"
 
-#: ../cms-basis.php:224
-msgid "Einstellungen &rsaquo; CMS-Basis"
-msgstr "Settings &rsaquo; CMS Basis"
+#: includes/API/Works.php:63
+msgid "Projektarbeiten"
+msgstr "Project works"
 
-#: ../cms-basis.php:243
-msgid "Feld 1"
-msgstr "Field 1"
+#: includes/API/Works.php:64
+msgid "Sonstige Arbeiten"
+msgstr "Other works"
 
-#: ../cms-basis.php:273
-msgid "Hier kommt der Inhalt der Kontexthilfe."
-msgstr "Here comes the Context Help content."
+#: includes/API/Formatter.php:93
+msgid "Themenbeschreibung"
+msgstr "Topic description"
 
-#: ../cms-basis.php:279
-msgid "Übersicht"
-msgstr "Overview"
+#: includes/API/Formatter.php:94
+msgid "Themengebiete"
+msgstr "Topics"
 
-#: ../cms-basis.php:283
-msgid "Für mehr Information"
-msgstr "For more information"
+#: includes/API/Formatter.php:95
+msgid "Voraussetzungen"
+msgstr "Requirements"
 
-#: ../cms-basis.php:283
-msgid "RRZE-Webteam in Github"
-msgstr "RRZE-Webteam on Github"
+#: includes/API/Formatter.php:96
+msgid "Betreuer"
+msgstr "Supervisor"
 
-#: ../includes/cmb-meta-boxes.php:25
-msgid "Titel der Meta-Box"
-msgstr "Meta Box Title"
+#: includes/API/Formatter.php:97
+msgid "Hochschullehrer"
+msgstr "Professor"
 
-#: ../includes/cmb/helpers/cmb_Meta_Box_ajax.php:47
-msgid "Bitte versuchen Sie es erneut"
-msgstr "Please Try Again"
+#: includes/API/Formatter.php:119
+msgid "Aufgaben"
+msgstr "Tasks"
 
-#: ../includes/cmb/helpers/cmb_Meta_Box_ajax.php:131
-msgid "Embed entfernen"
-msgstr "Remove Embed"
+#: includes/API/Formatter.php:134
+msgid "PDF"
+msgstr "PDF"
 
-#: ../includes/cmb/helpers/cmb_Meta_Box_ajax.php:134
-#, php-format
-msgid "Keine oEmbed Ergebnisse für %s gefunden. Für weitere Infos siehe"
-msgstr "No oEmbed Results Found for %s. View more info at"
+#: includes/API/Formatter.php:142
+msgid "Aushang"
+msgstr "Notice"
 
-#: ../includes/cmb/helpers/cmb_Meta_Box_field.php:459
-msgid "Gruppe hinzufügen"
-msgstr "Add Group"
+#: includes/Blocks/Blocks.php:88
+msgid "Keine Einträge gefunden."
+msgstr "No entries found."
 
-#: ../includes/cmb/helpers/cmb_Meta_Box_field.php:460
-msgid "Gruppe entfernen"
-msgstr "Remove Group"
+#: includes/Admin/SettingsPage.php:117
+msgid "LIKE-Json Einstellungen"
+msgstr "LIKE-Json Settings"
 
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:250
-msgid "Zeile hinzufügen"
-msgstr "Add Row"
+#: includes/Admin/SettingsPage.php:134
+msgid "LIKE-Json Netzwerkeinstellungen"
+msgstr "LIKE-Json Network Settings"
 
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:306
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:706
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:768
-#: ../includes/cmb/init.php:284
-msgid "Entfernen"
-msgstr "Remove"
+#: includes/Admin/SettingsPage.php:112
+msgid "Sie haben nicht die erforderliche Berechtigung."
+msgstr "You do not have the required permission."
 
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:601
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:635
-msgid "Keine Terms"
-msgstr "No terms"
+#: includes/Admin/SettingsPage.php:170
+msgid "JSON-Quelle (URL)"
+msgstr "JSON source (URL)"
 
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:674
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:728
-msgid "Datei hinzufügen"
-msgstr "Add File"
+#: includes/Admin/SettingsPage.php:172
+msgid "Basis-URL der JSON-Daten (ohne Endpunktnamen wie \"bachelorarbeiten\")."
+msgstr "Base URL of the JSON data (without endpoint names such as \"bachelorarbeiten\")."
 
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:695
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:760
-#: ../includes/cmb/init.php:283
-msgid "Bild entfernen"
-msgstr "Remove Image"
+#: includes/Admin/SettingsPage.php:180
+msgid "Timeout (Sekunden)"
+msgstr "Timeout (seconds)"
 
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:706
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:768
-#: ../includes/cmb/init.php:285
-msgid "Datei:"
-msgstr "File:"
+#: includes/Admin/SettingsPage.php:182
+msgid "Maximale Wartezeit für Remote-Anfragen."
+msgstr "Maximum wait time for remote requests."
 
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:706
-#: ../includes/cmb/helpers/cmb_Meta_Box_types.php:768
-#: ../includes/cmb/init.php:286
-msgid "Herunterladen"
-msgstr "Download"
+#: includes/Admin/SettingsPage.php:190
+msgid "User-Agent"
+msgstr "User-Agent"
 
-#: ../includes/cmb/init.php:260
-msgid "Löschen"
-msgstr "Clear"
-
-#: ../includes/cmb/init.php:261
-msgid "Standard"
-msgstr "Default"
-
-#: ../includes/cmb/init.php:262
-msgid "Farbe wählen"
-msgstr "Select Color"
-
-#: ../includes/cmb/init.php:263
-msgid "Aktuelle Farbe"
-msgstr "Current Color"
-
-#: ../includes/cmb/init.php:282
-msgid "Verwenden Sie diese Datei"
-msgstr "Use this file"
-
-#: ../includes/cmb/init.php:288
-msgid "[ ↑ ]&nbsp;"
-msgstr "[ ↑ ]&nbsp;"
-
-#: ../includes/cmb/init.php:289
-msgid "&nbsp;[ ↓ ]"
-msgstr "&nbsp;[ ↓ ]"
-
-#: ../includes/cmb/init.php:290
-msgid "Alle aktivieren / deaktivieren"
-msgstr "Select / Deselect All"
-
-#: ../includes/cmb/init.php:1181
-msgid "Speichern"
-msgstr "Save"
-
-#~ msgid "Neu hinzufügen"
-#~ msgstr "Add New"
-
-#~ msgid "Suchbegriff eingeben"
-#~ msgstr "Type to search"
-
-#~ msgid "Ziehen, um die genaue Position einzustellen."
-#~ msgstr "Drag to set the exact location."
-
-#~ msgid "Sind Sie sicher, dass Sie dieses Feld löschen wollen?"
-#~ msgstr "Are you sure you want to delete this field?"
-
-#~ msgid ""
-#~ "<p><strong>Für mehr Information:</strong></p><p><a href=\"http://blogs."
-#~ "fau.de/webworking\">RRZE-Webworking</a></p><p><a href=\"https://github."
-#~ "com/RRZE-Webteam\">RRZE-Webteam in Github</a></p>"
-#~ msgstr ""
-#~ "<p><strong>For more Information:</strong></p><p><a href=\"http://blogs."
-#~ "fau.de/webworking\">RRZE-Webworking</a></p><p><a href=\"https://github."
-#~ "com/RRZE-Webteam\">RRZE-Webteam on Github</a></p>"
+#: includes/Admin/SettingsPage.php:192
+msgid "RRZE-konformer User-Agent für automatisierte Abrufe."
+msgstr "RRZE-compliant User-Agent for automated requests."

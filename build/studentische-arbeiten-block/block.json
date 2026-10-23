@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "like-json/studentische-arbeiten",
+  "title": "Studentische Arbeiten (LIKE)",
+  "category": "widgets",
+  "icon": "welcome-learn-more",
+  "description": "Zeigt studentische Arbeiten aus der LIKE-Datenbank an.",
+  "keywords": [
+    "abschlussarbeiten",
+    "bachelorarbeit",
+    "masterarbeit",
+    "like"
+  ],
+  "textdomain": "like-json",
+  "editorScript": "file:./index.js",
+  "attributes": {
+    "task": {
+      "type": "string",
+      "default": "bachelorarbeiten"
+    },
+    "format": {
+      "type": "string",
+      "default": "liste"
+    },
+    "id": {
+      "type": "string",
+      "default": ""
+    },
+    "advisor": {
+      "type": "string",
+      "default": ""
+    },
+    "status": {
+      "type": "string",
+      "default": ""
+    },
+    "ressources": {
+      "type": "string",
+      "default": "link"
+    }
+  },
+  "supports": {
+    "html": false
+  }
+}
