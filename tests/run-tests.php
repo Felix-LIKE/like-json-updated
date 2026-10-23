@@ -121,6 +121,15 @@ t_eq( '', $clean['source_url'], 'sanitize strips javascript: URL (esc_url_raw re
 t_eq( 99, $clean['timeout'], 'sanitize keeps timeout 99' );
 t_eq( 10, $clean['crawl_limit'], 'sanitize clamps crawl_limit 500 to max 10' );
 
+// Trailing/leading whitespace in source_url must be trimmed, not URL-encoded.
+$clean_ws = Settings::sanitize(
+	array(
+		'source_url' => '  https://like35.like.e-technik.uni-erlangen.de/json/  ',
+	)
+);
+t_eq( 'https://like35.like.e-technik.uni-erlangen.de/json/', $clean_ws['source_url'], 'sanitize trims whitespace around source_url' );
+t_assert( false === strpos( $clean_ws['source_url'], '%20' ), 'sanitize does not URL-encode whitespace into source_url' );
+
 $ua = Settings::default_user_agent();
 t_assert( false !== stripos( $ua, 'FAU-LIKE-like-json/' ), 'User-Agent starts with FAU-LIKE-like-json/' );
 t_assert( false !== strpos( $ua, 'mailto:like-admin@fau.de' ), 'User-Agent contains the contact mailto' );

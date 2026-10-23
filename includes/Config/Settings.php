@@ -132,7 +132,10 @@ class Settings {
 			$value = isset( $input[ $key ] ) ? $input[ $key ] : $default_value;
 			switch ( $key ) {
 				case 'source_url':
-					$clean[ $key ] = esc_url_raw( $value );
+					// Trim first: esc_url_raw() does not strip surrounding
+					// whitespace and would otherwise URL-encode it into the
+					// saved value (breaking the endpoint URL).
+					$clean[ $key ] = esc_url_raw( trim( (string) $value ) );
 					break;
 				case 'timeout':
 					$clean[ $key ] = max( 1, absint( $value ) );
