@@ -47,7 +47,11 @@ const found = {
 };
 
 const mismatches = Object.entries( found ).filter( ( [ , v ] ) => v !== version );
-if ( mismatches.length > 0 ) {
+const isFixMode = process.argv.includes( '--fix' );
+
+// In check mode, a mismatch is an error and must stop the build.
+// In fix mode, the mismatch is expected and is what --fix repairs below.
+if ( mismatches.length > 0 && ! isFixMode ) {
 	console.error( `Version mismatch detected. Expected "${version}" everywhere.` );
 	for ( const [ name, v ] of Object.entries( found ) ) {
 		const ok = v === version ? 'OK' : 'MISMATCH';
@@ -58,7 +62,7 @@ if ( mismatches.length > 0 ) {
 }
 
 // --- Fix mode ---
-if ( process.argv.includes( '--fix' ) ) {
+if ( isFixMode ) {
 	mainContent = mainContent.replace( /^(\s*\*\s*Version:\s*)[0-9.]+/m, `$1${version}` );
 	mainContent = mainContent.replace( /(define\( 'LIKE_JSON_VERSION', ')[^']+(' \))/m, `$1${version}$2` );
 	readmeContent = readmeContent.replace( /^(Stable tag:\s*)[0-9.]+/m, `$1${version}` );

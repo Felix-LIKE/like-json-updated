@@ -120,5 +120,4 @@ class SettingsPage {
 		</table>
 		<?php
 	}
-
 }

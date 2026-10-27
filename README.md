@@ -119,6 +119,17 @@ Auf einer WordPress-Multisite sind die Einstellungen ebenfalls ausschließlich l
 Website verwaltet ihre eigene JSON-Quelle, ihr eigenes Timeout und ihren eigenen User-Agent.
 Es gibt keine netzwerkweiten Einstellungen und keine Vererbung zwischen Websites.
 
+> **Hinweis (bewusste Abweichung von der RRZE-SPEC):** Die RRZE-SPEC verlangt in den
+> Abschnitten *1.2.1 „Multisite is mandatory“* und *14 „Single Site and Multisite“* eine
+> vollständige Multisite-Fähigkeit inklusive sauberer Trennung von netzwerkweiten und
+> site-spezifischen Einstellungen. Dieses Plugin ist bewusst **nur site-lokal** konfiguriert
+> (keine Netzwerkweiten Einstellungen, keine Vererbung), weil es ausschließlich auf einzelnen
+> Sites verwendet wird und keine netzwerkweiten Secrets oder zentralen Endpunkte verwaltet.
+> Die site-lokalen Optionen funktionieren unter Multisite korrekt und unabhängig pro Site.
+> Die Abweichung ist eine bewusste Entscheidung der Website-Verantwortlichen; bei einer
+> Aufnahme in den zentralen RRZE-CMS-Betrieb ist sie mit dem RRZE-Webteam abzustimmen
+> (siehe Abschnitte 1.2.1 und 14 der SPEC).
+
 ## Externe Dienste und Daten
 
 | Eigenschaft | Wert |
