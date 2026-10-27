@@ -26,6 +26,16 @@ class Client {
 	const CACHE_TTL = 3600; // 1 hour.
 
 	/**
+	 * Last request error type.
+	 *
+	 * This deliberately stores a small internal status instead of an HTTP
+	 * library error message, which must never be shown to site visitors.
+	 *
+	 * @var string
+	 */
+	private $last_error = '';
+
+	/**
 	 * Fetch and decode a JSON endpoint.
 	 *
 	 * @param string $endpoint Endpoint name (e.g. 'bachelorarbeiten').
@@ -42,6 +52,7 @@ class Client {
 
 		$data = json_decode( $body, true );
 		if ( ! is_array( $data ) ) {
+			$this->last_error = 'invalid_data';
 			return '';
 		}
 
@@ -51,13 +62,11 @@ class Client {
 	/**
 	 * Fetch a raw body from a URL with caching and error handling.
 	 *
-	 * Falls back from HTTPS to HTTP if the HTTPS request fails (e.g. missing
-	 * intermediate certificate on the host).
-	 *
 	 * @param string $url URL.
 	 * @return string
 	 */
 	public function fetch_body( $url ) {
+		$this->last_error = '';
 		$cache_key = 'like_json_fetch_' . md5( $url );
 		$cached    = get_transient( $cache_key );
 		if ( false !== $cached ) {
@@ -65,13 +74,6 @@ class Client {
 		}
 
 		$body = $this->request( $url );
-		if ( '' === $body ) {
-			// Fallback to HTTP.
-			$http_url = preg_replace( '#^https://#i', 'http://', $url );
-			if ( $http_url !== $url ) {
-				$body = $this->request( $http_url );
-			}
-		}
 
 		if ( '' !== $body ) {
 			set_transient( $cache_key, $body, self::CACHE_TTL );
@@ -81,14 +83,24 @@ class Client {
 	}
 
 	/**
+	 * Get the sanitized error status of the most recent request.
+	 *
+	 * @return string Empty string, 'timeout', 'unavailable', or 'invalid_data'.
+	 */
+	public function get_last_error() {
+		return $this->last_error;
+	}
+
+	/**
 	 * Perform one HTTP request via the WordPress HTTP API.
 	 *
 	 * @param string $url URL.
 	 * @return string Body on success, empty string on failure.
 	 */
 	private function request( $url ) {
+		$timeout = max( 1, min( 60, absint( Settings::get( 'timeout' ) ) ) );
 		$args = array(
-			'timeout'     => Settings::get( 'timeout' ),
+			'timeout'     => $timeout,
 			'user-agent'  => Settings::get( 'user_agent' ),
 			'redirection' => 3,
 		);
@@ -99,20 +111,37 @@ class Client {
 		remove_filter( 'http_api_curl', array( $this, 'set_cainfo' ) );
 
 		if ( is_wp_error( $response ) ) {
+			$message          = $response->get_error_message();
+			$this->last_error = $this->is_timeout_error( $message ) ? 'timeout' : 'unavailable';
 			return '';
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
 		if ( $code < 200 || $code >= 300 ) {
+			$this->last_error = 'unavailable';
 			return '';
 		}
 
 		$body = wp_remote_retrieve_body( $response );
 		if ( ! is_string( $body ) || '' === $body ) {
+			$this->last_error = 'unavailable';
 			return '';
 		}
 
 		return $body;
+	}
+
+	/**
+	 * Determine whether a WordPress HTTP error denotes a timeout.
+	 *
+	 * Transport implementations use differing messages, therefore the check is
+	 * intentionally limited to the standard timeout terms.
+	 *
+	 * @param string $message HTTP error message.
+	 * @return bool
+	 */
+	private function is_timeout_error( $message ) {
+		return false !== stripos( $message, 'timed out' ) || false !== stripos( $message, 'timeout' );
 	}
 
 	/**

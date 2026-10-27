@@ -22,14 +22,13 @@ Lehrstuhls für Informationstechnik mit dem Schwerpunkt Kommunikationselektronik
 4. [Nutzung: Gutenberg-Block (empfohlen)](#nutzung-gutenberg-block-empfohlen)
 5. [Nutzung: Legacy-Shortcode](#nutzung-legacy-shortcode)
 6. [Einstellungen](#einstellungen)
-7. [Multisite-Verhalten](#multisite-verhalten)
-8. [Externe Dienste und Daten](#externe-dienste-und-daten)
-9. [Sicherheit](#sicherheit)
-10. [Barrierefreiheit](#barrierefreiheit)
-11. [Datenschutz](#datenschutz)
-12. [Entwicklung und Tests](#entwicklung-und-tests)
-13. [Mitwirken und Feedback](#mitwirken-und-feedback)
-14. [Copyright](#copyright)
+7. [Externe Dienste und Daten](#externe-dienste-und-daten)
+8. [Sicherheit](#sicherheit)
+9. [Barrierefreiheit](#barrierefreiheit)
+10. [Datenschutz](#datenschutz)
+11. [Entwicklung und Tests](#entwicklung-und-tests)
+12. [Mitwirken und Feedback](#mitwirken-und-feedback)
+13. [Copyright](#copyright)
 
 ---
 
@@ -116,19 +115,9 @@ Die Einstellungen finden Sie unter **Einstellungen → LIKE-Json**.
 | **Timeout (Sekunden)** | Maximale Wartezeit für Remote-Anfragen (Standard: 10) |
 | **User-Agent** | RRZE-konformer User-Agent für automatisierte Abrufe |
 
-## Multisite-Verhalten
-
-Das Plugin unterstützt **WordPress Multisite**:
-
-- **Site-Einstellungen** (pro Website): werden mit `get_option()` / `update_option()` gespeichert
-  und gelten nur für die jeweilige Website.
-- **Netzwerkeinstellungen** (netzwerkweit): werden im Netzwerk-Admin unter
-  **Einstellungen → LIKE-Json** verwaltet und mit `get_site_option()` / `update_site_option()`
-  gespeichert.
-- **Priorität:** Ein Netzwerkwert gilt als Vorgabe für alle Websites; ein auf einer Website
-  gesetzter eigener Wert überschreibt die Netzwerkvorgabe für diese Website.
-
-Damit ist die Trennung zwischen netzwerkweiten und site-spezifischen Einstellungen sauber umgesetzt.
+Auf einer WordPress-Multisite sind die Einstellungen ebenfalls ausschließlich lokal: Jede
+Website verwaltet ihre eigene JSON-Quelle, ihr eigenes Timeout und ihren eigenen User-Agent.
+Es gibt keine netzwerkweiten Einstellungen und keine Vererbung zwischen Websites.
 
 ## Externe Dienste und Daten
 
@@ -140,7 +129,7 @@ Damit ist die Trennung zwischen netzwerkweiten und site-spezifischen Einstellung
 | **Zweck** | Abruf der studentischen Arbeiten für die Anzeige auf der Website |
 | **Übertragene Daten** | Öffentliche Arbeitsdaten (Titel, Beschreibung, Betreuer, Status, PDF-Links) |
 | **Authentifizierung** | Keine (öffentliche Daten) |
-| **Timeout-Verhalten** | Timeout konfigurierbar (Standard 10 s); bei Fehler wird ein leerer Inhalt angezeigt |
+| **Timeout-Verhalten** | Timeout konfigurierbar (1–60 s, Standard 10 s); bei Zeitüberschreitung wird ein Hinweis angezeigt |
 | **Fehlerverhalten** | Bei nicht erreichbarer Quelle wird ein definierter Hinweis ausgegeben, die Website bleibt funktionsfähig |
 | **Datenschutz** | Es werden ausschließlich öffentliche Daten abgerufen; keine personenbezogenen Daten übertragen |
 | **Verlässt Daten die FAU?** | Nein – Quelle und Website liegen beide im FAU-Netz |
@@ -163,10 +152,11 @@ der Anfragen zu begrenzen.
 - **Validierung:** Remote-Antworten werden auf HTTP-Status und JSON-Struktur geprüft.
 - **Remote Requests:** Es wird ausschließlich die WordPress-HTTP-API verwendet (kein
   `curl`/`file_get_contents` direkt). Die HTTPS-Verbindung wird mit einem mitgelieferten
-  Intermediate-Zertifikat (GEANT TLS ECC 1) aufgebaut; bei Fehler wird auf HTTP zurückgegriffen.
+  Intermediate-Zertifikat (GEANT TLS ECC 1) aufgebaut. Bei einem HTTPS-Fehler wird der
+  Abruf abgebrochen; es erfolgt kein unsicherer Fallback auf HTTP.
 - **Einstellungen:** Eingaben werden validiert und sanitized; die Ausgabe wird escaped.
 - **Berechtigungen:** Die Einstellungsseiten sind serverseitig über WordPress-Capabilities
-  geschützt (`manage_options` / `manage_network_options`); Formulare verwenden Nonces.
+  geschützt (`manage_options`); Formulare verwenden Nonces.
 
 ## Barrierefreiheit
 

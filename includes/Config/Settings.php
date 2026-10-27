@@ -2,10 +2,8 @@
 /**
  * Configuration and settings for LIKE-Json.
  *
- * Centralizes option storage. The plugin stores site-specific settings via
- * get_option()/update_option() and network-wide defaults via get_site_option()/
- * update_site_option(). On Multisite, network defaults are read first, then
- * site values override them. This is documented in README.md.
+ * Centralizes site-specific option storage. On WordPress Multisite each site
+ * has its own option and there are no network-wide settings.
  *
  * @package LIKE_Json
  */
@@ -23,13 +21,6 @@ class Settings {
 	 * @var string
 	 */
 	const OPTION_NAME = 'like_json_settings';
-
-	/**
-	 * Option name for network settings.
-	 *
-	 * @var string
-	 */
-	const NETWORK_OPTION_NAME = 'like_json_network_settings';
 
 	/**
 	 * Version option name.
@@ -72,7 +63,7 @@ class Settings {
 	/**
 	 * Get a single setting value.
 	 *
-	 * Precedence: filter override > site option > network option > default.
+	 * Precedence: filter override > site option > default.
 	 *
 	 * @param string $key     Setting key.
 	 * @param mixed  $fallback Optional fallback.
@@ -87,18 +78,10 @@ class Settings {
 			return $value;
 		}
 
-		// Site-specific value first; it overrides the network default.
+		// Settings are always local to the current site.
 		$site = get_option( self::OPTION_NAME, array() );
 		if ( is_array( $site ) && isset( $site[ $key ] ) && '' !== $site[ $key ] ) {
 			return $site[ $key ];
-		}
-
-		// Network value as a fallback for all sites.
-		if ( is_multisite() ) {
-			$network = get_site_option( self::NETWORK_OPTION_NAME, array() );
-			if ( is_array( $network ) && isset( $network[ $key ] ) && '' !== $network[ $key ] ) {
-				return $network[ $key ];
-			}
 		}
 
 		return $default;
@@ -138,7 +121,7 @@ class Settings {
 					$clean[ $key ] = esc_url_raw( trim( (string) $value ) );
 					break;
 				case 'timeout':
-					$clean[ $key ] = max( 1, absint( $value ) );
+					$clean[ $key ] = max( 1, min( 60, absint( $value ) ) );
 					break;
 				case 'crawl_limit':
 					$clean[ $key ] = max( 1, min( 10, absint( $value ) ) );

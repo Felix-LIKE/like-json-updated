@@ -85,9 +85,27 @@ class Blocks {
 		}
 
 		if ( '' === trim( $html ) ) {
-			$html = '<p class="like-json-empty">' . esc_html__( 'Keine Einträge gefunden.', 'like-json' ) . '</p>';
+			$html = $this->error_html( $works->get_last_error() );
 		}
 
 		return $html;
+	}
+
+	/**
+	 * Render a visitor-safe message for a remote data error.
+	 *
+	 * @param string $error Sanitized client error status.
+	 * @return string
+	 */
+	private function error_html( $error ) {
+		if ( 'timeout' === $error ) {
+			$message = __( 'Der Abruf der Datenquelle hat das Zeitlimit überschritten. Bitte versuchen Sie es später erneut.', 'like-json' );
+		} elseif ( 'unavailable' === $error || 'invalid_data' === $error ) {
+			$message = __( 'Die Datenquelle ist derzeit nicht erreichbar. Bitte versuchen Sie es später erneut.', 'like-json' );
+		} else {
+			$message = __( 'Keine Einträge gefunden.', 'like-json' );
+		}
+
+		return '<p class="like-json-error" role="alert">' . esc_html( $message ) . '</p>';
 	}
 }

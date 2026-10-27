@@ -20,3 +20,5 @@ Thumbs.db
 
 # Local WordPress installs (for local testing only)
 wp-content/
+/nbproject/private/
+/nbproject

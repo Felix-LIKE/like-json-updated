@@ -49,7 +49,7 @@ class Main {
 	public function init() {
 		( new Blocks() )->register();
 		( new Shortcode() )->register();
-		if ( is_admin() || is_network_admin() ) {
+		if ( is_admin() ) {
 			( new SettingsPage() )->register();
 		}
 	}
@@ -86,8 +86,7 @@ class Main {
 	public static function uninstall() {
 		delete_option( Settings::OPTION_NAME );
 		delete_option( Settings::VERSION_OPTION_NAME );
-		if ( is_multisite() ) {
-			delete_site_option( Settings::NETWORK_OPTION_NAME );
-		}
+		// Remove the obsolete network option left by versions prior to 2.0.1.
+		delete_site_option( 'like_json_network_settings' );
 	}
 }

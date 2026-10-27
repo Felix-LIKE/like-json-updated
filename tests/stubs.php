@@ -26,6 +26,13 @@ if ( ! defined( 'WP_Http' ) ) {
 $GLOBALS['__wp_options'] = array();
 
 /**
+ * WordPress network option store.
+ *
+ * @var array
+ */
+$GLOBALS['__wp_site_options'] = array();
+
+/**
  * WordPress HTTP responses queue for tests.
  *
  * @var array
@@ -77,15 +84,17 @@ function delete_option( $option ) {
 }
 
 function get_site_option( $option, $default = false ) {
-	return get_option( $option, $default );
+	return isset( $GLOBALS['__wp_site_options'][ $option ] ) ? $GLOBALS['__wp_site_options'][ $option ] : $default;
 }
 
 function update_site_option( $option, $value ) {
-	return update_option( $option, $value );
+	$GLOBALS['__wp_site_options'][ $option ] = $value;
+	return true;
 }
 
 function delete_site_option( $option ) {
-	return delete_option( $option );
+	unset( $GLOBALS['__wp_site_options'][ $option ] );
+	return true;
 }
 
 /**
@@ -302,6 +311,7 @@ class WP_Error {
 		$first = reset( $this->errors );
 		return is_array( $first ) ? $first[0] : '';
 	}
+
 }
 
 /**
@@ -329,10 +339,18 @@ function test_queue_response_error() {
 }
 
 /**
+ * Queue a timeout response.
+ */
+function test_queue_response_timeout() {
+	$GLOBALS['__http_queue'][] = new WP_Error( 'http_request_failed', 'cURL error 28: Operation timed out.' );
+}
+
+/**
  * Reset the test state.
  */
 function test_reset() {
 	$GLOBALS['__wp_options']    = array();
+	$GLOBALS['__wp_site_options'] = array();
 	$GLOBALS['__http_queue']    = array();
 	$GLOBALS['__wp_transients'] = array();
 	$GLOBALS['__is_multisite']  = false;

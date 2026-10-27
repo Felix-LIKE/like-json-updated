@@ -1,107 +1,237 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: LIKE-Json 2.0.0\n"
-"Report-Msgid-Bugs-To: like-admin@fau.de\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/like-json-"
+"updated\n"
+"POT-Creation-Date: 2026-10-27T13:36:04+00:00\n"
+"PO-Revision-Date: 2026-10-23 12:30+0100\n"
 "Last-Translator: LIKE <like-admin@fau.de>\n"
 "Language-Team: LIKE <like-admin@fau.de>\n"
+"Language: de_DE_formal\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-23 12:30+0100\n"
-"PO-Revision-Date: 2026-10-23 12:30+0100\n"
-"Language: de_DE_formal\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: like-json 2.0.0\n"
 "X-Domain: like-json\n"
 
-#: includes/API/Works.php:60
-msgid "Bachelorarbeiten"
-msgstr "Bachelorarbeiten"
+#. Plugin Name of the plugin
+#: like-json.php includes/Admin/SettingsPage.php:42
+#: includes/Admin/SettingsPage.php:43
+msgid "LIKE-Json"
+msgstr ""
 
-#: includes/API/Works.php:61
-msgid "Masterarbeiten"
-msgstr "Masterarbeiten"
+#. Plugin URI of the plugin
+#: like-json.php
+msgid "https://github.com/Felix-LIKE/like-json-updated"
+msgstr ""
 
-#: includes/API/Works.php:62
-msgid "Forschungspraktika"
-msgstr "Forschungspraktika"
+#. Description of the plugin
+#: like-json.php
+msgid ""
+"Stellt studentische Arbeiten (Abschlussarbeiten) aus der LIKE-Datenbank als "
+"Gutenberg-Block und als Legacy-Shortcode dar."
+msgstr ""
 
-#: includes/API/Works.php:63
-msgid "Projektarbeiten"
-msgstr "Projektarbeiten"
+#. Author of the plugin
+#: like-json.php
+msgid "LIKE"
+msgstr ""
 
-#: includes/API/Works.php:64
-msgid "Sonstige Arbeiten"
-msgstr "Sonstige Arbeiten"
+#. Author URI of the plugin
+#: like-json.php
+msgid "https://www.like.tf.fau.de/"
+msgstr ""
 
-#: includes/API/Formatter.php:93
-msgid "Themenbeschreibung"
-msgstr "Themenbeschreibung"
-
-#: includes/API/Formatter.php:94
-msgid "Themengebiete"
-msgstr "Themengebiete"
-
-#: includes/API/Formatter.php:95
-msgid "Voraussetzungen"
-msgstr "Voraussetzungen"
-
-#: includes/API/Formatter.php:96
-msgid "Betreuer"
-msgstr "Betreuer"
-
-#: includes/API/Formatter.php:97
-msgid "Hochschullehrer"
-msgstr "Hochschullehrer"
-
-#: includes/API/Formatter.php:119
-msgid "Aufgaben"
-msgstr "Aufgaben"
-
-#: includes/API/Formatter.php:134
-msgid "PDF"
-msgstr "PDF"
-
-#: includes/API/Formatter.php:142
-msgid "Aushang"
-msgstr "Aushang"
-
-#: includes/Blocks/Blocks.php:88
-msgid "Keine Einträge gefunden."
-msgstr "Keine Einträge gefunden."
-
-#: includes/Admin/SettingsPage.php:117
-msgid "LIKE-Json Einstellungen"
-msgstr "LIKE-Json Einstellungen"
-
-#: includes/Admin/SettingsPage.php:134
-msgid "LIKE-Json Netzwerkeinstellungen"
-msgstr "LIKE-Json Netzwerkeinstellungen"
-
-#: includes/Admin/SettingsPage.php:112
+#: includes/Admin/SettingsPage.php:69
 msgid "Sie haben nicht die erforderliche Berechtigung."
 msgstr "Sie haben nicht die erforderliche Berechtigung."
 
-#: includes/Admin/SettingsPage.php:170
+#: includes/Admin/SettingsPage.php:74
+msgid "LIKE-Json Einstellungen"
+msgstr "LIKE-Json Einstellungen"
+
+#: includes/Admin/SettingsPage.php:95
 msgid "JSON-Quelle (URL)"
 msgstr "JSON-Quelle (URL)"
 
-#: includes/Admin/SettingsPage.php:172
+#: includes/Admin/SettingsPage.php:99
 msgid "Basis-URL der JSON-Daten (ohne Endpunktnamen wie \"bachelorarbeiten\")."
-msgstr "Basis-URL der JSON-Daten (ohne Endpunktnamen wie \"bachelorarbeiten\")."
+msgstr ""
+"Basis-URL der JSON-Daten (ohne Endpunktnamen wie \"bachelorarbeiten\")."
 
-#: includes/Admin/SettingsPage.php:180
+#: includes/Admin/SettingsPage.php:103
 msgid "Timeout (Sekunden)"
 msgstr "Timeout (Sekunden)"
 
-#: includes/Admin/SettingsPage.php:182
+#: includes/Admin/SettingsPage.php:108
 msgid "Maximale Wartezeit für Remote-Anfragen."
 msgstr "Maximale Wartezeit für Remote-Anfragen."
 
-#: includes/Admin/SettingsPage.php:190
+#: includes/Admin/SettingsPage.php:112
 msgid "User-Agent"
 msgstr "User-Agent"
 
-#: includes/Admin/SettingsPage.php:192
+#: includes/Admin/SettingsPage.php:117
 msgid "RRZE-konformer User-Agent für automatisierte Abrufe."
 msgstr "RRZE-konformer User-Agent für automatisierte Abrufe."
+
+#: includes/API/Formatter.php:70
+msgid "Themenbeschreibung"
+msgstr "Themenbeschreibung"
+
+#: includes/API/Formatter.php:71
+msgid "Themengebiete"
+msgstr "Themengebiete"
+
+#: includes/API/Formatter.php:72
+msgid "Voraussetzungen"
+msgstr "Voraussetzungen"
+
+#: includes/API/Formatter.php:73
+msgid "Betreuer"
+msgstr "Betreuer"
+
+#: includes/API/Formatter.php:74
+msgid "Hochschullehrer"
+msgstr "Hochschullehrer"
+
+#: includes/API/Formatter.php:95
+msgid "Aufgaben"
+msgstr "Aufgaben"
+
+#: includes/API/Formatter.php:123
+msgid "PDF"
+msgstr "PDF"
+
+#: includes/API/Formatter.php:131 includes/API/Formatter.php:136
+msgid "Aushang"
+msgstr "Aushang"
+
+#: includes/API/Works.php:38 src/studentische-arbeiten-block/index.js:22
+msgid "Bachelorarbeiten"
+msgstr "Bachelorarbeiten"
+
+#: includes/API/Works.php:39 src/studentische-arbeiten-block/index.js:23
+msgid "Masterarbeiten"
+msgstr "Masterarbeiten"
+
+#: includes/API/Works.php:40 src/studentische-arbeiten-block/index.js:25
+msgid "Forschungspraktika"
+msgstr "Forschungspraktika"
+
+#: includes/API/Works.php:41 src/studentische-arbeiten-block/index.js:28
+msgid "Projektarbeiten"
+msgstr "Projektarbeiten"
+
+#: includes/API/Works.php:42 src/studentische-arbeiten-block/index.js:29
+msgid "Sonstige Arbeiten"
+msgstr "Sonstige Arbeiten"
+
+#: includes/Blocks/Blocks.php:102 includes/Shortcode.php:88
+msgid ""
+"Der Abruf der Datenquelle hat das Zeitlimit überschritten. Bitte versuchen "
+"Sie es später erneut."
+msgstr ""
+"Der Abruf der Datenquelle hat das Zeitlimit überschritten. Bitte versuchen "
+"Sie es später erneut."
+
+#: includes/Blocks/Blocks.php:104 includes/Shortcode.php:90
+msgid ""
+"Die Datenquelle ist derzeit nicht erreichbar. Bitte versuchen Sie es später "
+"erneut."
+msgstr ""
+"Die Datenquelle ist derzeit nicht erreichbar. Bitte versuchen Sie es später "
+"erneut."
+
+#: includes/Blocks/Blocks.php:106 includes/Shortcode.php:92
+msgid "Keine Einträge gefunden."
+msgstr "Keine Einträge gefunden."
+
+#: src/studentische-arbeiten-block/index.js:30
+#, fuzzy
+msgid "Alle Arbeiten"
+msgstr "Sonstige Arbeiten"
+
+#: src/studentische-arbeiten-block/index.js:34
+msgid "Liste"
+msgstr ""
+
+#: src/studentische-arbeiten-block/index.js:35
+msgid "Akkordeon"
+msgstr ""
+
+#: src/studentische-arbeiten-block/index.js:39
+msgid "Link"
+msgstr ""
+
+#: src/studentische-arbeiten-block/index.js:40
+msgid "Base64 eingebettet"
+msgstr ""
+
+#: src/studentische-arbeiten-block/index.js:57
+#, fuzzy
+msgid "Einstellungen"
+msgstr "LIKE-Json Einstellungen"
+
+#: src/studentische-arbeiten-block/index.js:61
+#, fuzzy
+msgid "Aufgabe"
+msgstr "Aufgaben"
+
+#: src/studentische-arbeiten-block/index.js:69
+msgid "Darstellung"
+msgstr ""
+
+#: src/studentische-arbeiten-block/index.js:77
+msgid "PDF-Ressourcen"
+msgstr ""
+
+#: src/studentische-arbeiten-block/index.js:85
+msgid "ID (optional)"
+msgstr ""
+
+#: src/studentische-arbeiten-block/index.js:90
+msgid "Betreuer (optional)"
+msgstr ""
+
+#: src/studentische-arbeiten-block/index.js:97
+msgid "Status (optional)"
+msgstr ""
+
+#: src/studentische-arbeiten-block/block.json
+#, fuzzy
+msgctxt "block title"
+msgid "Studentische Arbeiten (LIKE)"
+msgstr "Sonstige Arbeiten"
+
+#: src/studentische-arbeiten-block/block.json
+msgctxt "block description"
+msgid "Zeigt studentische Arbeiten aus der LIKE-Datenbank an."
+msgstr ""
+
+#: src/studentische-arbeiten-block/block.json
+#, fuzzy
+msgctxt "block keyword"
+msgid "abschlussarbeiten"
+msgstr "Bachelorarbeiten"
+
+#: src/studentische-arbeiten-block/block.json
+#, fuzzy
+msgctxt "block keyword"
+msgid "bachelorarbeit"
+msgstr "Bachelorarbeiten"
+
+#: src/studentische-arbeiten-block/block.json
+#, fuzzy
+msgctxt "block keyword"
+msgid "masterarbeit"
+msgstr "Masterarbeiten"
+
+#: src/studentische-arbeiten-block/block.json
+msgctxt "block keyword"
+msgid "like"
+msgstr ""
+
+#~ msgid "LIKE-Json Netzwerkeinstellungen"
+#~ msgstr "LIKE-Json Netzwerkeinstellungen"

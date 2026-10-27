@@ -1,4 +1,4 @@
-=== LIKE-Json ===
+ja. === LIKE-Json ===
 Contributors: like
 Tags: abschlussarbeiten, block, shortcode, university, research
 Requires at least: 6.0

@@ -1,164 +1,225 @@
 # Copyright (C) 2026 LIKE
-# This file is distributed under the same license as the LIKE-Json package.
+# This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
 "Project-Id-Version: LIKE-Json 2.0.0\n"
-"Report-Msgid-Bugs-To: like-admin@fau.de\n"
-"POT-Creation-Date: 2026-10-23 12:30+0100\n"
-"PO-Revision-Date: 2026-10-23 12:30+0100\n"
-"Last-Translator: LIKE <like-admin@fau.de>\n"
-"Language-Team: LIKE <like-admin@fau.de>\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/like-json-updated\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: like-json 2.0.0\n"
+"POT-Creation-Date: 2026-10-27T13:36:04+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: like-json\n"
 
-#: includes/API/Works.php:60
-msgid "Bachelorarbeiten"
+#. Plugin Name of the plugin
+#: like-json.php
+#: includes/Admin/SettingsPage.php:42
+#: includes/Admin/SettingsPage.php:43
+msgid "LIKE-Json"
 msgstr ""
 
-#: includes/API/Works.php:61
-msgid "Masterarbeiten"
+#. Plugin URI of the plugin
+#: like-json.php
+msgid "https://github.com/Felix-LIKE/like-json-updated"
 msgstr ""
 
-#: includes/API/Works.php:62
-msgid "Forschungspraktika"
+#. Description of the plugin
+#: like-json.php
+msgid "Stellt studentische Arbeiten (Abschlussarbeiten) aus der LIKE-Datenbank als Gutenberg-Block und als Legacy-Shortcode dar."
 msgstr ""
 
-#: includes/API/Works.php:63
-msgid "Projektarbeiten"
+#. Author of the plugin
+#: like-json.php
+msgid "LIKE"
 msgstr ""
 
-#: includes/API/Works.php:64
-msgid "Sonstige Arbeiten"
+#. Author URI of the plugin
+#: like-json.php
+msgid "https://www.like.tf.fau.de/"
 msgstr ""
 
-#: includes/API/Formatter.php:93
-msgid "Themenbeschreibung"
-msgstr ""
-
-#: includes/API/Formatter.php:94
-msgid "Themengebiete"
-msgstr ""
-
-#: includes/API/Formatter.php:95
-msgid "Voraussetzungen"
-msgstr ""
-
-#: includes/API/Formatter.php:96
-msgid "Betreuer"
-msgstr ""
-
-#: includes/API/Formatter.php:97
-msgid "Hochschullehrer"
-msgstr ""
-
-#: includes/API/Formatter.php:119
-msgid "Aufgaben"
-msgstr ""
-
-#: includes/API/Formatter.php:134
-msgid "PDF"
-msgstr ""
-
-#: includes/API/Formatter.php:142
-msgid "Aushang"
-msgstr ""
-
-#: includes/Blocks/Blocks.php:88
-msgid "Keine Einträge gefunden."
-msgstr ""
-
-#: includes/Admin/SettingsPage.php:117
-msgid "LIKE-Json Einstellungen"
-msgstr ""
-
-#: includes/Admin/SettingsPage.php:134
-msgid "LIKE-Json Netzwerkeinstellungen"
-msgstr ""
-
-#: includes/Admin/SettingsPage.php:112
+#: includes/Admin/SettingsPage.php:69
 msgid "Sie haben nicht die erforderliche Berechtigung."
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:170
+#: includes/Admin/SettingsPage.php:74
+msgid "LIKE-Json Einstellungen"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:95
 msgid "JSON-Quelle (URL)"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:172
+#: includes/Admin/SettingsPage.php:99
 msgid "Basis-URL der JSON-Daten (ohne Endpunktnamen wie \"bachelorarbeiten\")."
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:180
+#: includes/Admin/SettingsPage.php:103
 msgid "Timeout (Sekunden)"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:182
+#: includes/Admin/SettingsPage.php:108
 msgid "Maximale Wartezeit für Remote-Anfragen."
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:190
+#: includes/Admin/SettingsPage.php:112
 msgid "User-Agent"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:192
+#: includes/Admin/SettingsPage.php:117
 msgid "RRZE-konformer User-Agent für automatisierte Abrufe."
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:14
+#: includes/API/Formatter.php:70
+msgid "Themenbeschreibung"
+msgstr ""
+
+#: includes/API/Formatter.php:71
+msgid "Themengebiete"
+msgstr ""
+
+#: includes/API/Formatter.php:72
+msgid "Voraussetzungen"
+msgstr ""
+
+#: includes/API/Formatter.php:73
+msgid "Betreuer"
+msgstr ""
+
+#: includes/API/Formatter.php:74
+msgid "Hochschullehrer"
+msgstr ""
+
+#: includes/API/Formatter.php:95
+msgid "Aufgaben"
+msgstr ""
+
+#: includes/API/Formatter.php:123
+msgid "PDF"
+msgstr ""
+
+#: includes/API/Formatter.php:131
+#: includes/API/Formatter.php:136
+msgid "Aushang"
+msgstr ""
+
+#: includes/API/Works.php:38
+#: src/studentische-arbeiten-block/index.js:22
 msgid "Bachelorarbeiten"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:18
+#: includes/API/Works.php:39
+#: src/studentische-arbeiten-block/index.js:23
+msgid "Masterarbeiten"
+msgstr ""
+
+#: includes/API/Works.php:40
+#: src/studentische-arbeiten-block/index.js:25
+msgid "Forschungspraktika"
+msgstr ""
+
+#: includes/API/Works.php:41
+#: src/studentische-arbeiten-block/index.js:28
+msgid "Projektarbeiten"
+msgstr ""
+
+#: includes/API/Works.php:42
+#: src/studentische-arbeiten-block/index.js:29
 msgid "Sonstige Arbeiten"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:19
+#: includes/Blocks/Blocks.php:102
+#: includes/Shortcode.php:88
+msgid "Der Abruf der Datenquelle hat das Zeitlimit überschritten. Bitte versuchen Sie es später erneut."
+msgstr ""
+
+#: includes/Blocks/Blocks.php:104
+#: includes/Shortcode.php:90
+msgid "Die Datenquelle ist derzeit nicht erreichbar. Bitte versuchen Sie es später erneut."
+msgstr ""
+
+#: includes/Blocks/Blocks.php:106
+#: includes/Shortcode.php:92
+msgid "Keine Einträge gefunden."
+msgstr ""
+
+#: src/studentische-arbeiten-block/index.js:30
 msgid "Alle Arbeiten"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:23
+#: src/studentische-arbeiten-block/index.js:34
 msgid "Liste"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:24
+#: src/studentische-arbeiten-block/index.js:35
 msgid "Akkordeon"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:28
+#: src/studentische-arbeiten-block/index.js:39
 msgid "Link"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:29
+#: src/studentische-arbeiten-block/index.js:40
 msgid "Base64 eingebettet"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:60
+#: src/studentische-arbeiten-block/index.js:57
 msgid "Einstellungen"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:62
+#: src/studentische-arbeiten-block/index.js:61
 msgid "Aufgabe"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:68
+#: src/studentische-arbeiten-block/index.js:69
 msgid "Darstellung"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:74
+#: src/studentische-arbeiten-block/index.js:77
 msgid "PDF-Ressourcen"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:80
+#: src/studentische-arbeiten-block/index.js:85
 msgid "ID (optional)"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:84
+#: src/studentische-arbeiten-block/index.js:90
 msgid "Betreuer (optional)"
 msgstr ""
 
-#: src/studentische-arbeiten-block/index.js:88
+#: src/studentische-arbeiten-block/index.js:97
 msgid "Status (optional)"
+msgstr ""
+
+#: src/studentische-arbeiten-block/block.json
+msgctxt "block title"
+msgid "Studentische Arbeiten (LIKE)"
+msgstr ""
+
+#: src/studentische-arbeiten-block/block.json
+msgctxt "block description"
+msgid "Zeigt studentische Arbeiten aus der LIKE-Datenbank an."
+msgstr ""
+
+#: src/studentische-arbeiten-block/block.json
+msgctxt "block keyword"
+msgid "abschlussarbeiten"
+msgstr ""
+
+#: src/studentische-arbeiten-block/block.json
+msgctxt "block keyword"
+msgid "bachelorarbeit"
+msgstr ""
+
+#: src/studentische-arbeiten-block/block.json
+msgctxt "block keyword"
+msgid "masterarbeit"
+msgstr ""
+
+#: src/studentische-arbeiten-block/block.json
+msgctxt "block keyword"
+msgid "like"
 msgstr ""

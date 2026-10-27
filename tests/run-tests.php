@@ -118,7 +118,7 @@ $clean = Settings::sanitize(
 	)
 );
 t_eq( '', $clean['source_url'], 'sanitize strips javascript: URL (esc_url_raw returns empty)' );
-t_eq( 99, $clean['timeout'], 'sanitize keeps timeout 99' );
+t_eq( 60, $clean['timeout'], 'sanitize clamps timeout 99 to max 60' );
 t_eq( 10, $clean['crawl_limit'], 'sanitize clamps crawl_limit 500 to max 10' );
 
 // Trailing/leading whitespace in source_url must be trimmed, not URL-encoded.
@@ -135,17 +135,13 @@ t_assert( false !== stripos( $ua, 'FAU-LIKE-like-json/' ), 'User-Agent starts wi
 t_assert( false !== strpos( $ua, 'mailto:like-admin@fau.de' ), 'User-Agent contains the contact mailto' );
 t_assert( false !== strpos( $ua, 'https://www.like.tf.fau.de/' ), 'User-Agent contains the info URL' );
 
-// Multisite precedence: site option overrides network option.
+// Network options never influence site-local plugin settings.
 test_reset();
 $GLOBALS['__is_multisite'] = true;
-t_eq( 10, Settings::get( 'timeout' ), 'multisite: default timeout when no options set' );
-update_site_option( Settings::NETWORK_OPTION_NAME, array( 'timeout' => 5 ) );
-t_eq( 5, Settings::get( 'timeout' ), 'multisite: network-only value is used' );
+update_site_option( 'like_json_network_settings', array( 'timeout' => 5 ) );
+t_eq( 10, Settings::get( 'timeout' ), 'multisite: network option is ignored' );
 update_option( Settings::OPTION_NAME, array( 'timeout' => 25 ) );
-t_eq( 25, Settings::get( 'timeout' ), 'multisite: site value overrides network value' );
-delete_option( Settings::OPTION_NAME );
-t_eq( 5, Settings::get( 'timeout' ), 'multisite: falls back to network after site deleted' );
-$GLOBALS['__is_multisite'] = false;
+t_eq( 25, Settings::get( 'timeout' ), 'multisite: site-local option is used' );
 test_reset();
 
 // --------------------------------------------------------------- HTTP / Client.
@@ -177,13 +173,21 @@ $client = new Client();
 test_queue_response( 'not-json', 200 );
 t_eq( '', $client->get_json( 'bachelorarbeiten' ), 'invalid JSON -> empty string' );
 
-// HTTPS fallback to HTTP: first request fails, second succeeds.
+// HTTPS failure must not downgrade to HTTP.
 test_reset();
 $client = new Client();
-test_queue_response_error(); // HTTPS fails.
-test_queue_response( '[{"id":"2"}]', 200 ); // HTTP succeeds.
+test_queue_response_error();
 $data = $client->get_json( 'bachelorarbeiten' );
-t_eq( array( array( 'id' => '2' ) ), $data, 'HTTPS fails, falls back to HTTP' );
+t_eq( '', $data, 'HTTPS failure does not downgrade to HTTP' );
+t_eq( 'unavailable', $client->get_last_error(), 'network error is reported as unavailable' );
+t_eq( 0, count( $GLOBALS['__http_queue'] ), 'HTTPS failure makes no second HTTP request' );
+
+// Timeout is exposed as a distinct, safe error status.
+test_reset();
+$client = new Client();
+test_queue_response_timeout();
+t_eq( '', $client->get_json( 'bachelorarbeiten' ), 'timeout returns an empty result' );
+t_eq( 'timeout', $client->get_last_error(), 'timeout is reported separately' );
 
 // User-Agent and timeout are set on the request.
 test_reset();
@@ -193,6 +197,14 @@ $client->get_json( 'bachelorarbeiten' );
 $last = $GLOBALS['__last_request'];
 t_assert( isset( $last['args']['user-agent'] ) && false !== strpos( $last['args']['user-agent'], 'FAU-LIKE-like-json/' ), 'User-Agent is set on requests' );
 t_eq( 10, $last['args']['timeout'], 'timeout is set on requests' );
+
+// A runtime filter or legacy option cannot disable the timeout cap.
+test_reset();
+update_option( Settings::OPTION_NAME, array( 'timeout' => 90 ) );
+$client = new Client();
+test_queue_response( '[]', 200 );
+$client->get_json( 'bachelorarbeiten' );
+t_eq( 60, $GLOBALS['__last_request']['args']['timeout'], 'timeout is capped at 60 seconds at request time' );
 
 // Caching: two calls only one HTTP request.
 test_reset();
@@ -289,6 +301,13 @@ t_assert( false !== strpos( $html, 'like-json-list' ), 'shortcode default format
 test_reset();
 $html_empty = $shortcode->render( array( 'task' => 'gibtsnicht' ) );
 t_assert( false !== strpos( $html_empty, 'Keine Einträge gefunden' ), 'unknown task -> friendly empty message' );
+
+// Remote errors render a useful, safe visitor message.
+test_reset();
+test_queue_response_timeout();
+$html_timeout = $shortcode->render( array( 'task' => 'bachelorarbeiten' ) );
+t_assert( false !== strpos( $html_timeout, 'Zeitlimit überschritten' ), 'timeout -> helpful error message' );
+t_assert( false !== strpos( $html_timeout, 'role="alert"' ), 'timeout message is announced to assistive technology' );
 
 // ------------------------------------------------------------------ Summary.
 echo "\n========================================\n";

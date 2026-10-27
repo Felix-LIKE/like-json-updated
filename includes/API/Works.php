@@ -53,6 +53,10 @@ class Works {
 	 * @return array
 	 */
 	public function get( $task, $id = '', $advisor = '', $status = '' ) {
+		if ( ! is_string( $task ) || ! array_key_exists( $task, self::tasks() ) ) {
+			return array();
+		}
+
 		$data = $this->client->get_json( $task );
 		if ( ! is_array( $data ) ) {
 			return array();
@@ -85,6 +89,15 @@ class Works {
 			}
 		}
 		return $all;
+	}
+
+	/**
+	 * Get the sanitized error status of the most recent data request.
+	 *
+	 * @return string
+	 */
+	public function get_last_error() {
+		return $this->client->get_last_error();
 	}
 
 	/**
