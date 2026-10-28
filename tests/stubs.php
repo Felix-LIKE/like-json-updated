@@ -188,6 +188,10 @@ function esc_html( $text ) {
 	return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
 }
 
+function seems_utf8( $str ) {
+	return 1 === preg_match( '//u', $str );
+}
+
 function sanitize_text_field( $text ) {
 	return trim( wp_strip_all_tags( (string) $text ) );
 }

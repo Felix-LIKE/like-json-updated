@@ -56,7 +56,73 @@ class Client {
 			return '';
 		}
 
-		return $data;
+		return $this->normalize_encoding( $data );
+	}
+
+	/**
+	 * Normalize accidentally double-encoded UTF-8 strings in remote JSON data.
+	 *
+	 * Some legacy data sources interpret UTF-8 bytes as Windows-1252 before
+	 * serializing JSON again. This results in visible sequences such as "Ã¼"
+	 * instead of "ü". Sequences are repaired individually so one unrecoverable
+	 * character cannot prevent valid parts of the same field from being fixed.
+	 *
+	 * @param mixed $value JSON value.
+	 * @return mixed
+	 */
+	private function normalize_encoding( $value ) {
+		if ( is_array( $value ) ) {
+			foreach ( $value as $key => $item ) {
+				$value[ $key ] = $this->normalize_encoding( $item );
+			}
+			return $value;
+		}
+
+		if ( ! is_string( $value ) || ! preg_match( '/(?:Ã[\x{0080}-\x{00BF}]|Â[\x{0080}-\x{00BF}]|â[\x{0080}-\x{10FFFF}]{2})/u', $value ) ) {
+			return $value;
+		}
+
+		$repaired = preg_replace_callback(
+			'/(?:Ã[\x{0080}-\x{00BF}]|Â[\x{0080}-\x{00BF}]|â[\x{0080}-\x{10FFFF}]{2})/u',
+			array( $this, 'repair_encoding_sequence' ),
+			$value
+		);
+
+		return null === $repaired ? $value : $repaired;
+	}
+
+	/**
+	 * Repair one reversible mojibake sequence.
+	 *
+	 * @param array $matches Regular-expression matches.
+	 * @return string
+	 */
+	private function repair_encoding_sequence( $matches ) {
+		$sequence = $matches[0];
+		$repaired = $this->convert_windows_1252_to_utf8( $sequence );
+
+		return false !== $repaired && seems_utf8( $repaired ) ? $repaired : $sequence;
+	}
+
+	/**
+	 * Reinterpret a UTF-8 mojibake value as Windows-1252 bytes.
+	 *
+	 * The returned byte sequence is deliberately validated as UTF-8 by the
+	 * caller. mbstring is preferred; iconv is a compatible fallback.
+	 *
+	 * @param string $value Mojibake value encoded as UTF-8.
+	 * @return string|false
+	 */
+	private function convert_windows_1252_to_utf8( $value ) {
+		if ( function_exists( 'mb_convert_encoding' ) ) {
+			return mb_convert_encoding( $value, 'Windows-1252', 'UTF-8' );
+		}
+
+		if ( function_exists( 'iconv' ) ) {
+			return iconv( 'UTF-8', 'Windows-1252//IGNORE', $value );
+		}
+
+		return false;
 	}
 
 	/**

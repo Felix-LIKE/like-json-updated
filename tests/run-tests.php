@@ -167,6 +167,21 @@ test_queue_response( '[{"id":"1"}]', 200 );
 $data = $client->get_json( 'bachelorarbeiten' );
 t_eq( array( array( 'id' => '1' ) ), $data, 'get_json returns decoded array' );
 
+// Double-encoded UTF-8 from the remote source is repaired while valid UTF-8 remains intact.
+test_reset();
+$client = new Client();
+test_queue_response( '[{"titel":"FÃ¼r â€žTelemetrieâ€œ","betreuer":"Müller"}]', 200 );
+$data = $client->get_json( 'bachelorarbeiten' );
+t_eq( 'Für „Telemetrie“', $data[0]['titel'], 'repairs double-encoded UTF-8 in remote JSON' );
+t_eq( 'Müller', $data[0]['betreuer'], 'leaves valid UTF-8 unchanged' );
+
+// Repair valid sequences even when another part of the same field is not reversible.
+test_reset();
+$client = new Client();
+test_queue_response( '[{"beschreibung":"MÃ¤use âBATSa"}]', 200 );
+$data = $client->get_json( 'bachelorarbeiten' );
+t_eq( 'Mäuse âBATSa', $data[0]['beschreibung'], 'repairs valid sequences in partially corrupt text' );
+
 // Invalid JSON -> empty.
 test_reset();
 $client = new Client();
