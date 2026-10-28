@@ -3,7 +3,7 @@
  * Plugin Name:       LIKE-Json
  * Plugin URI:        https://github.com/Felix-LIKE/like-json-updated
  * Description:       Stellt studentische Arbeiten (Abschlussarbeiten) aus der LIKE-Datenbank als Gutenberg-Block und als Legacy-Shortcode dar.
- * Version:           2.0.0
+ * Version:           2.0.1
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            LIKE
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Direct access not allowed.
 }
 
-define( 'LIKE_JSON_VERSION', '2.0.0' );
+define( 'LIKE_JSON_VERSION', '2.0.1' );
 define( 'LIKE_JSON_FILE', __FILE__ );
 define( 'LIKE_JSON_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LIKE_JSON_URL', plugin_dir_url( __FILE__ ) );

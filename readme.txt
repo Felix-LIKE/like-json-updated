@@ -1,10 +1,10 @@
-ja. === LIKE-Json ===
+=== LIKE-Json ===
 Contributors: like
 Tags: abschlussarbeiten, block, shortcode, university, research
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -45,6 +45,20 @@ With `ressources="link"` PDF files are provided as direct links instead of being
 embedded as base64 data. This saves bandwidth and is the recommended setting.
 
 == Changelog ==
+
+= 2.0.1 =
+* Security: HTTPS failure no longer falls back to plain HTTP (removes a downgrade risk).
+* Change: Settings are now strictly site-local; the network-wide settings page and
+  the network option were removed (the plugin is used on individual sites).
+  This is a deliberate deviation from the RRZE SPEC "Multisite is mandatory"
+  (section 1.2.1 / section 14) - see README.md for the rationale.
+* Change: Remote request timeout is capped at 1-60 seconds (cannot be raised
+  beyond 60s via a filter or a legacy option).
+* New: Specific visitor-safe error messages for timeouts and unreachable sources
+  (with role="alert"), instead of a generic empty message.
+* Hardening: Unknown or non-string task names are rejected before any request.
+* Fix: Reverted an accidental edit in the readme.txt header.
+* Translations: Regenerated .po/.mo for the new strings (en_US, de_DE, de_DE_formal).
 
 = 2.0.0 =
 * New: Gutenberg block "Studentische Arbeiten (LIKE)" (server-side rendered).

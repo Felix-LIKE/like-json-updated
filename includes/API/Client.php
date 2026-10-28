@@ -67,8 +67,8 @@ class Client {
 	 */
 	public function fetch_body( $url ) {
 		$this->last_error = '';
-		$cache_key = 'like_json_fetch_' . md5( $url );
-		$cached    = get_transient( $cache_key );
+		$cache_key        = 'like_json_fetch_' . md5( $url );
+		$cached           = get_transient( $cache_key );
 		if ( false !== $cached ) {
 			return $cached;
 		}
@@ -99,7 +99,7 @@ class Client {
 	 */
 	private function request( $url ) {
 		$timeout = max( 1, min( 60, absint( Settings::get( 'timeout' ) ) ) );
-		$args = array(
+		$args    = array(
 			'timeout'     => $timeout,
 			'user-agent'  => Settings::get( 'user_agent' ),
 			'redirection' => 3,
