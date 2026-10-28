@@ -25,36 +25,128 @@ class Formatter {
 	public function list( $data, $ressources = 'link' ) {
 		$output = '<ul class="like-json-list">';
 		foreach ( $data as $record ) {
-			$output .= $this->record_html( $record, $ressources, false );
+			$title = isset( $record['titel'] ) ? $record['titel'] : '';
+			$id    = isset( $record['id'] ) ? $record['id'] : '';
+
+			$output .= '<li class="like-json-item">';
+			$output .= '<h2 class="like-json-title like-json-caption">'
+				. esc_html( $title )
+				. ( '' !== $id ? ' [ID: ' . esc_html( $id ) . ']' : '' )
+				. '</h2>';
+			$output .= $this->record_html( $record, $ressources );
+			$output .= '</li>';
 		}
 		$output .= '</ul>';
 		return $output;
 	}
 
 	/**
-	 * Render records as an accordion (RRZE-Elements compatible shortcode).
+	 * Render records as accordions when RRZE Elements Blocks is available.
+	 *
+	 * Falls back to headings when the required RRZE blocks are not registered.
 	 *
 	 * @param array  $data       Records.
 	 * @param string $ressources 'link' or 'base64'.
 	 * @return string
 	 */
 	public function accordion( $data, $ressources = 'link' ) {
-		$output = '[collapsibles]';
+		$items = array();
 		foreach ( $data as $record ) {
 			$title = isset( $record['titel'] ) ? $record['titel'] : '';
 			$id    = isset( $record['id'] ) ? $record['id'] : '';
-			// Title is inserted into a shortcode attribute, so it MUST be escaped
-			// for the attribute context AND have brackets stripped to avoid
-			// shortcode-breaking.
-			$title_attr = esc_attr( $title . ' (ID: ' . $id . ')' );
-			$title_attr = str_replace( array( '[', ']' ), '', $title_attr );
-
-			$output .= '[collapse title="' . $title_attr . '"]';
-			$output .= $this->record_html( $record, $ressources, true );
-			$output .= '[/collapse]';
+			$items[] = array(
+				'title'   => $title . ' (ID: ' . $id . ')',
+				'content' => $this->record_html( $record, $ressources ),
+			);
 		}
-		$output .= '[/collapsibles]';
-		return do_shortcode( $output );
+
+		if ( $this->has_rrze_accordion_blocks() ) {
+			return $this->render_rrze_accordion_blocks( $items );
+		}
+
+		return $this->render_accordion_fallback( $items );
+	}
+
+	/**
+	 * Determine whether the RRZE Elements accordion blocks are available.
+	 *
+	 * Checking registered block types also covers installations where the plugin
+	 * is active but does not register its blocks for the active theme.
+	 *
+	 * @return bool
+	 */
+	private function has_rrze_accordion_blocks() {
+		if ( ! class_exists( '\\WP_Block_Type_Registry' ) ) {
+			return false;
+		}
+
+		$registry = \WP_Block_Type_Registry::get_instance();
+		return $registry->is_registered( 'rrze-elements/collapsibles' )
+			&& $registry->is_registered( 'rrze-elements/collapse' );
+	}
+
+	/**
+	 * Render records through the RRZE Elements accordion blocks.
+	 *
+	 * The content is wrapped in core/html blocks so the dynamic RRZE block
+	 * receives it as inner blocks and can generate its required markup.
+	 *
+	 * @param array $items Accordion titles and rendered content.
+	 * @return string
+	 */
+	private function render_rrze_accordion_blocks( $items ) {
+		$this->enqueue_rrze_accordion_assets();
+		$accordion_id = wp_unique_id( 'like-json-accordion-' );
+		$blocks = '<!-- wp:rrze-elements/collapsibles -->';
+
+		foreach ( $items as $index => $item ) {
+			$jump_name  = $accordion_id . '-' . ( $index + 1 );
+			$attributes = wp_json_encode(
+				array(
+					'title'    => $item['title'],
+					'jumpName' => $jump_name,
+				),
+				JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+			);
+			$blocks    .= '<!-- wp:rrze-elements/collapse ' . $attributes . ' -->';
+			$blocks    .= '<!-- wp:html -->' . $item['content'] . '<!-- /wp:html -->';
+			$blocks    .= '<!-- /wp:rrze-elements/collapse -->';
+		}
+
+		$blocks .= '<!-- /wp:rrze-elements/collapsibles -->';
+
+		return do_blocks( $blocks );
+	}
+
+	/**
+	 * Enqueue the assets required by the RRZE accordion blocks.
+	 *
+	 * The dynamically rendered blocks do not declare the legacy accordion
+	 * script in their block metadata. RRZE Elements Blocks exposes this method
+	 * specifically for requesting the associated frontend assets.
+	 *
+	 * @return void
+	 */
+	private function enqueue_rrze_accordion_assets() {
+		if ( is_callable( array( '\\RRZE\\ElementsBlocks\\FrontendAssets', 'enqueueAccordion' ) ) ) {
+			call_user_func( array( '\\RRZE\\ElementsBlocks\\FrontendAssets', 'enqueueAccordion' ) );
+		}
+	}
+
+	/**
+	 * Render an accessible non-accordion fallback.
+	 *
+	 * @param array $items Accordion titles and rendered content.
+	 * @return string
+	 */
+	private function render_accordion_fallback( $items ) {
+		$output = '';
+		foreach ( $items as $item ) {
+			$output .= '<h2 class="like-json-heading">' . esc_html( $item['title'] ) . '</h2>';
+			$output .= $item['content'];
+		}
+
+		return $output;
 	}
 
 	/**
@@ -62,10 +154,9 @@ class Formatter {
 	 *
 	 * @param array  $record     Record data.
 	 * @param string $ressources 'link' or 'base64'.
-	 * @param bool   $accordion  Whether inside an accordion (affects header).
 	 * @return string
 	 */
-	private function record_html( $record, $ressources, $accordion ) {
+	private function record_html( $record, $ressources ) {
 		$fields = array(
 			'beschreibung'  => __( 'Themenbeschreibung', 'like-json' ),
 			'kategorien'    => __( 'Themengebiete', 'like-json' ),
@@ -75,14 +166,6 @@ class Formatter {
 		);
 
 		$html = '<ul class="like-json-record">';
-
-		// Title as list caption (not in accordion; accordion uses the collapse title).
-		if ( ! $accordion && isset( $record['titel'] ) ) {
-			$html .= '<li class="like-json-title"><span class="like-json-caption">'
-				. esc_html( $record['titel'] )
-				. ( isset( $record['id'] ) ? ' [ID: ' . esc_html( $record['id'] ) . ']' : '' )
-				. '</span></li>';
-		}
 
 		foreach ( $fields as $key => $label ) {
 			if ( ! empty( $record[ $key ] ) ) {

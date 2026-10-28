@@ -278,11 +278,25 @@ t_assert( false === strpos( $list_html, '<script>' ), 'list: <script> is escaped
 t_assert( false === strpos( $list_html, '<img' ), 'list: <img> tag is escaped (no raw image tag)' );
 t_assert( false === strpos( $list_html, 'href="javascript:' ), 'list: javascript: not present as a real href attribute' );
 t_assert( false !== strpos( $list_html, '&lt;script&gt;' ), 'list: script escaped as entity' );
+t_assert( false !== strpos( $list_html, '<li class="like-json-item"><h2 class="like-json-title like-json-caption">' ), 'list: title is a heading in an outer list item' );
+t_assert( false !== strpos( $list_html, '</h2><ul class="like-json-record">' ), 'list: record details are nested below the title' );
 
 $acc_html = $formatter->accordion( array( $record ), 'link' );
 t_assert( false === strpos( $acc_html, '<script>' ), 'accordion: no raw script' );
 t_assert( false !== strpos( $acc_html, '&lt;script&gt;' ), 'accordion: script escaped as entity' );
-t_assert( false !== strpos( $acc_html, '<details>' ), 'accordion: emits accordion structure (via [collapse] shortcode)' );
+t_assert( false !== strpos( $acc_html, '<h2 class="like-json-heading">' ), 'accordion fallback: emits headings' );
+t_assert( false === strpos( $acc_html, '[collapse' ), 'accordion fallback: no legacy shortcode is emitted' );
+
+// Active RRZE Elements Blocks uses the current Accordion block structure.
+test_reset();
+$GLOBALS['__registered_blocks'] = array(
+	'rrze-elements/collapsibles' => true,
+	'rrze-elements/collapse'     => true,
+);
+$acc_html = $formatter->accordion( array( $record ), 'link' );
+t_assert( false !== strpos( $acc_html, '<!-- wp:rrze-elements/collapsibles -->' ), 'accordion: uses RRZE accordion container block' );
+t_assert( false !== strpos( $acc_html, '<!-- wp:rrze-elements/collapse {"title":' ), 'accordion: uses RRZE accordion item block' );
+t_assert( false !== strpos( $acc_html, '"jumpName":"like-json-accordion-1-1"' ), 'accordion: provides a unique target ID for each item' );
 
 // PDF link mode.
 $pdf_link = $formatter->list( array( $record ), 'link' );

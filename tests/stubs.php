@@ -252,6 +252,35 @@ function do_shortcode( $content ) {
 	return $content;
 }
 
+function do_blocks( $content ) {
+	$GLOBALS['__last_do_blocks'] = $content;
+	return $content;
+}
+
+function wp_json_encode( $data, $flags = 0, $depth = 512 ) {
+	return json_encode( $data, $flags, $depth );
+}
+
+function wp_unique_id( $prefix = '' ) {
+	$GLOBALS['__wp_unique_id'] = isset( $GLOBALS['__wp_unique_id'] )
+		? $GLOBALS['__wp_unique_id'] + 1
+		: 1;
+	return $prefix . $GLOBALS['__wp_unique_id'];
+}
+
+/**
+ * Minimal registry stub for testing optional block integrations.
+ */
+class WP_Block_Type_Registry {
+	public static function get_instance() {
+		return new self();
+	}
+
+	public function is_registered( $block_name ) {
+		return ! empty( $GLOBALS['__registered_blocks'][ $block_name ] );
+	}
+}
+
 function load_plugin_textdomain() {}
 
 function plugin_dir_path( $file ) {
@@ -359,4 +388,7 @@ function test_reset() {
 	$GLOBALS['__wp_transients'] = array();
 	$GLOBALS['__is_multisite']  = false;
 	$GLOBALS['__filters']       = array();
+	$GLOBALS['__registered_blocks'] = array();
+	$GLOBALS['__last_do_blocks'] = '';
+	$GLOBALS['__wp_unique_id']   = 0;
 }
