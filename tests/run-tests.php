@@ -130,6 +130,12 @@ $clean_ws = Settings::sanitize(
 t_eq( 'https://like35.like.e-technik.uni-erlangen.de/json/', $clean_ws['source_url'], 'sanitize trims whitespace around source_url' );
 t_assert( false === strpos( $clean_ws['source_url'], '%20' ), 'sanitize does not URL-encode whitespace into source_url' );
 
+// SSRF hardening: only https source URLs are accepted (host stays free).
+$clean_http = Settings::sanitize( array( 'source_url' => 'http://like35.like.e-technik.uni-erlangen.de/json/' ) );
+t_eq( '', $clean_http['source_url'], 'sanitize rejects http:// source_url (https only)' );
+$clean_https = Settings::sanitize( array( 'source_url' => 'https://neuer-server.example.org/json/' ) );
+t_eq( 'https://neuer-server.example.org/json/', $clean_https['source_url'], 'sanitize accepts any https host (new servers need no code change)' );
+
 $ua = Settings::default_user_agent();
 t_assert( false !== stripos( $ua, 'FAU-LIKE-like-json/' ), 'User-Agent starts with FAU-LIKE-like-json/' );
 t_assert( false !== strpos( $ua, 'mailto:like-admin@fau.de' ), 'User-Agent contains the contact mailto' );
@@ -203,6 +209,39 @@ $client = new Client();
 test_queue_response_timeout();
 t_eq( '', $client->get_json( 'bachelorarbeiten' ), 'timeout returns an empty result' );
 t_eq( 'timeout', $client->get_last_error(), 'timeout is reported separately' );
+
+// SSRF hardening: the same-origin lock rejects off-host and non-HTTPS URLs.
+test_reset();
+$client = new Client();
+test_queue_response( '[{"id":"1"}]', 200 );
+t_eq( '', $client->fetch_body( 'https://evil.example.net/json/bachelorarbeiten' ), 'SSRF: off-host URL is rejected (same-origin lock)' );
+t_eq( 'unavailable', $client->get_last_error(), 'SSRF: rejected off-host URL reports unavailable' );
+t_eq( 1, count( $GLOBALS['__http_queue'] ), 'SSRF: rejected URL consumes no queued response (no HTTP request)' );
+
+test_reset();
+$client = new Client();
+test_queue_response( '[{"id":"1"}]', 200 );
+t_eq( '', $client->fetch_body( 'http://example.test/json/bachelorarbeiten' ), 'SSRF: plain http URL is rejected (https only)' );
+t_eq( 1, count( $GLOBALS['__http_queue'] ), 'SSRF: rejected http URL consumes no queued response (no HTTP request)' );
+
+test_reset();
+$client = new Client();
+test_queue_response( '[{"id":"1"}]', 200 );
+t_eq( array( array( 'id' => '1' ) ), $client->get_json( 'bachelorarbeiten' ), 'same-origin https URL is fetched normally' );
+
+// DoS protection: an oversized JSON response is rejected, not buffered.
+test_reset();
+$client = new Client();
+test_queue_response( str_repeat( 'x', Client::MAX_JSON_BYTES + 1 ), 200 );
+t_eq( '', $client->fetch_body( 'https://example.test/json/bachelorarbeiten' ), 'oversized JSON response is rejected (size cap)' );
+t_eq( 'unavailable', $client->get_last_error(), 'oversized response reports unavailable' );
+
+// The size cap is applied at request time (transport-level streaming hint).
+test_reset();
+$client = new Client();
+test_queue_response( '[]', 200 );
+$client->fetch_body( 'https://example.test/json/bachelorarbeiten' );
+t_eq( Client::MAX_JSON_BYTES, $GLOBALS['__last_request']['args']['limit_response_size'], 'limit_response_size is set on requests' );
 
 // User-Agent and timeout are set on the request.
 test_reset();
@@ -314,6 +353,38 @@ t_assert( false !== strpos( $base64_html, 'data:application/pdf;base64,' ), 'bas
 test_reset();
 $base64_fail = $formatter->list( array( $record ), 'base64' );
 t_assert( false !== strpos( $base64_fail, 'href="https://example.test/x.pdf"' ), 'base64 mode fetch fail -> falls back to link' );
+
+// SSRF hardening: base64 mode must not fetch off-host or non-HTTPS PDFs.
+$record_offhost = array_merge(
+	sample_record_malicious(),
+	array( 'pdf' => 'https://evil.example.net/x.pdf' )
+);
+test_reset();
+test_queue_response( '%PDF-1.4 attacker', 200 );
+$base64_offhost = $formatter->list( array( $record_offhost ), 'base64' );
+t_assert( false !== strpos( $base64_offhost, 'href="https://evil.example.net/x.pdf"' ), 'base64: off-host PDF is not fetched, stays a plain link' );
+t_assert( false === strpos( $base64_offhost, 'data:application/pdf' ), 'base64: off-host PDF is not embedded (no data URI)' );
+
+$record_http = array_merge(
+	sample_record_malicious(),
+	array( 'pdf' => 'http://example.test/x.pdf' )
+);
+test_reset();
+test_queue_response( '%PDF-1.4 attacker', 200 );
+$base64_http = $formatter->list( array( $record_http ), 'base64' );
+t_assert( false !== strpos( $base64_http, 'href="http://example.test/x.pdf"' ), 'base64: http PDF is not fetched, stays a plain link' );
+t_assert( false === strpos( $base64_http, 'data:application/pdf' ), 'base64: http PDF is not embedded (no data URI)' );
+
+// The fetched body must actually be a PDF (magic bytes).
+$record_htmlbody = array_merge(
+	sample_record_malicious(),
+	array( 'pdf' => 'https://example.test/not-a-pdf.txt' )
+);
+test_reset();
+test_queue_response( '<html><body>not a pdf</body></html>', 200 );
+$base64_htmlbody = $formatter->list( array( $record_htmlbody ), 'base64' );
+t_assert( false !== strpos( $base64_htmlbody, 'href="https://example.test/not-a-pdf.txt"' ), 'base64: non-PDF body is not embedded, falls back to link' );
+t_assert( false === strpos( $base64_htmlbody, 'data:application/pdf' ), 'base64: non-PDF body produces no data URI' );
 
 // --------------------------------------------------------------- Shortcode.
 echo "\n== Shortcode ==\n";

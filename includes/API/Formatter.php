@@ -198,6 +198,12 @@ class Formatter {
 	 * the fetch succeeds, otherwise it falls back to a plain link. With
 	 * 'link' the PDF is always a direct link (recommended).
 	 *
+	 * SSRF hardening: the server-side fetch (base64 mode) only happens for
+	 * HTTPS URLs on the same host as the configured source_url, for bodies
+	 * that actually start with the PDF magic bytes and are within the size
+	 * cap. Everything else degrades to a plain link that the visitor's
+	 * browser opens directly.
+	 *
 	 * @param string $pdf_url    PDF URL.
 	 * @param string $ressources 'link' or 'base64'.
 	 * @return string
@@ -207,8 +213,8 @@ class Formatter {
 
 		if ( 'base64' === $ressources ) {
 			$client = new Client();
-			$body   = $client->fetch_body( esc_url_raw( $pdf_url ) );
-			if ( ! empty( $body ) ) {
+			$body   = $client->fetch_pdf( esc_url_raw( $pdf_url ) );
+			if ( ! empty( $body ) && 0 === strpos( $body, '%PDF-' ) ) {
 				// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Intentional: optional PDF embedding as base64 data URI (feature requested by the plugin's ressources="base64" mode).
 				$href = 'data:application/pdf;base64,' . chunk_split( base64_encode( $body ) );
 				return '<li><b>' . $label . ': </b><a class="like-json-pdf" href="' . $href . '" download="Aushang.pdf">' . esc_html__( 'Aushang', 'like-json' ) . '</a></li>';

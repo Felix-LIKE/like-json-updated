@@ -159,6 +159,12 @@ function is_multisite() {
 	return ! empty( $GLOBALS['__is_multisite'] );
 }
 
+function wp_parse_url( $url, $component = -1 ) {
+	// Mirror WordPress's wp_parse_url(): parse_url() is a core PHP function
+	// and the URL is small/trusted (admin-configured or plugin-built).
+	return parse_url( (string) $url, $component );
+}
+
 function trailingslashit( $string ) {
 	return rtrim( (string) $string, '/\\' ) . '/';
 }
@@ -391,4 +397,8 @@ function test_reset() {
 	$GLOBALS['__registered_blocks'] = array();
 	$GLOBALS['__last_do_blocks'] = '';
 	$GLOBALS['__wp_unique_id']   = 0;
+
+	// Default test data source: same host as the example.test URLs used in
+	// the HTTP tests, so the same-origin lock accepts them.
+	update_option( \LIKE_Json\Config\Settings::OPTION_NAME, array( 'source_url' => 'https://example.test/json/' ) );
 }

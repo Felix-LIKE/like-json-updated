@@ -5,7 +5,7 @@
 WordPress-Plugin zur Darstellung der studentischen Arbeiten (Abschlussarbeiten) des
 Lehrstuhls für Informationstechnik mit dem Schwerpunkt Kommunikationselektronik (LIKE).
 
-**Version:** 2.0.0 · **Lizenz:** GPLv3 or later · **Sprache:** Deutsch / Englisch
+**Version:** 2.1.0 · **Lizenz:** GPLv3 or later · **Sprache:** Deutsch / Englisch
 
 > **Endnutzer-Dokumentation (webbasiert):** Dieses README ist die gepflegte, webbasierte
 > Benutzerdokumentation (siehe auch die [Plugin-Beschreibung](readme.txt)). Sie wird im
@@ -149,7 +149,7 @@ Es gibt keine netzwerkweiten Einstellungen und keine Vererbung zwischen Websites
 gemäß den [FAU-Crawler-Regeln](https://www.wp.rrze.fau.de/entwicklung/vorgaben/crawler/):
 
 ```
-FAU-LIKE-like-json/2.0.0 (+https://www.like.tf.fau.de/;mailto:like-admin@fau.de)
+FAU-LIKE-like-json/2.1.0 (+https://www.like.tf.fau.de/;mailto:like-admin@fau.de)
 ```
 
 **Caching:** Remote-Daten werden für 1 Stunde zwischengespeichert (Transient), um die Anzahl
@@ -165,6 +165,19 @@ der Anfragen zu begrenzen.
   `curl`/`file_get_contents` direkt). Die HTTPS-Verbindung wird mit einem mitgelieferten
   Intermediate-Zertifikat (GEANT TLS ECC 1) aufgebaut. Bei einem HTTPS-Fehler wird der
   Abruf abgebrochen; es erfolgt kein unsicherer Fallback auf HTTP.
+- **Same-Origin-Lock (SSRF-Härtung):** Das Plugin ruft ausschließlich HTTPS-URLs auf dem
+  in „source_url" konfigurierten Host ab – sowohl für die JSON-Endpunkte als auch für
+  base64-PDF-Einbettungen. Dadurch kann weder eine manipulierte `source_url` noch ein
+  `pdf`-Feld aus den Remote-Daten den Server als Proxy für beliebige Ziele missbrauchen.
+  Da die Beschränkung über die Einstellung (nicht den Code) wirkt, kann das Plugin ohne
+  Codeänderung auf einen anderen oder zusätzlichen LIKE-Server umgestellt werden.
+- **https-Pflicht für source_url:** Die Einstellung „source_url" akzeptiert nur noch
+  `https://`-Adressen; nicht-HTTPS-Adressen werden abgelehnt.
+- **PDF-Magic-Bytes:** Im base64-Modus wird eine PDF nur dann eingebettet, wenn der
+  abgerufene Inhalt tatsächlich mit den PDF-Magic-Bytes (`%PDF-`) beginnt. Andernfalls
+  wird auf einen einfachen Link zurückgefallen.
+- **Antwortgrößen-Limits:** Alle Antworten sind hart begrenzt (JSON 2 MiB, PDFs 5 MiB,
+  absolute Obergrenze 10 MiB); übermäßig große Antworten werden verworfen (DoS-Schutz).
 - **Einstellungen:** Eingaben werden validiert und sanitized; die Ausgabe wird escaped.
 - **Berechtigungen:** Die Einstellungsseiten sind serverseitig über WordPress-Capabilities
   geschützt (`manage_options`); Formulare verwenden Nonces.

@@ -1,6 +1,6 @@
 {
   "name": "like-json",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "WordPress plugin for displaying student works (Abschlussarbeiten) from the LIKE database as a Gutenberg block and legacy shortcode.",
   "author": "LIKE - Lehrstuhl für Informationstechnik mit dem Schwerpunkt Kommunikationselektronik",
   "license": "GPL-3.0-or-later",

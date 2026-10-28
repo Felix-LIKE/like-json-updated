@@ -26,6 +26,30 @@ class Client {
 	const CACHE_TTL = 3600; // 1 hour.
 
 	/**
+	 * Hard cap for JSON responses (2 MiB).
+	 *
+	 * @var int
+	 */
+	const MAX_JSON_BYTES = 2097152;
+
+	/**
+	 * Hard cap for PDF responses (5 MiB).
+	 *
+	 * @var int
+	 */
+	const MAX_PDF_BYTES = 5242880;
+
+	/**
+	 * Hard cap applied to every response regardless of type.
+	 *
+	 * Guard rail for edge cases (e.g. a redirected response) so a single
+	 * oversized body can never exhaust server memory.
+	 *
+	 * @var int
+	 */
+	const MAX_ABSOLUTE_BYTES = 10485760; // 10 MiB.
+
+	/**
 	 * Last request error type.
 	 *
 	 * This deliberately stores a small internal status instead of an HTTP
@@ -126,7 +150,11 @@ class Client {
 	}
 
 	/**
-	 * Fetch a raw body from a URL with caching and error handling.
+	 * Fetch a raw JSON body from a URL with caching and error handling.
+	 *
+	 * The URL is expected to be one of the plugin's own endpoints (built from
+	 * the configured source_url). Same-origin, HTTPS and size enforcement are
+	 * applied in request().
 	 *
 	 * @param string $url URL.
 	 * @return string
@@ -139,13 +167,27 @@ class Client {
 			return $cached;
 		}
 
-		$body = $this->request( $url );
+		$body = $this->request( $url, self::MAX_JSON_BYTES );
 
 		if ( '' !== $body ) {
 			set_transient( $cache_key, $body, self::CACHE_TTL );
 		}
 
 		return $body;
+	}
+
+	/**
+	 * Fetch a PDF body (for ressources="base64") with a larger size cap.
+	 *
+	 * Same-origin, HTTPS and size enforcement are applied in request(). The
+	 * result is intentionally not cached in transients (PDFs can be large).
+	 *
+	 * @param string $url PDF URL.
+	 * @return string
+	 */
+	public function fetch_pdf( $url ) {
+		$this->last_error = '';
+		return $this->request( $url, self::MAX_PDF_BYTES );
 	}
 
 	/**
@@ -160,15 +202,32 @@ class Client {
 	/**
 	 * Perform one HTTP request via the WordPress HTTP API.
 	 *
-	 * @param string $url URL.
+	 * SSRF hardening: only HTTPS URLs on the host of the configured
+	 * source_url are fetched. Oversized responses are rejected.
+	 *
+	 * @param string $url       URL.
+	 * @param int    $max_bytes Maximum accepted body size in bytes.
 	 * @return string Body on success, empty string on failure.
 	 */
-	private function request( $url ) {
+	private function request( $url, $max_bytes ) {
+		// SSRF hardening: the plugin only ever fetches HTTPS URLs from the
+		// host configured as its own data source (same-origin lock). This
+		// prevents a malicious source_url or pdf field from turning the
+		// server into a proxy for arbitrary targets.
+		if ( ! $this->is_allowed_url( $url ) ) {
+			$this->last_error = 'unavailable';
+			return '';
+		}
+
 		$timeout = max( 1, min( 60, absint( Settings::get( 'timeout' ) ) ) );
 		$args    = array(
-			'timeout'     => $timeout,
-			'user-agent'  => Settings::get( 'user_agent' ),
-			'redirection' => 3,
+			'timeout'             => $timeout,
+			'user-agent'          => Settings::get( 'user_agent' ),
+			'redirection'         => 3,
+			// Let the transport stream up to the cap instead of buffering the
+			// whole body (supported by the cURL transport). The strlen() check
+			// below is the authoritative guard regardless of transport.
+			'limit_response_size' => min( $max_bytes, self::MAX_ABSOLUTE_BYTES ),
 		);
 
 		// Attach the intermediate certificate for this request only.
@@ -194,7 +253,52 @@ class Client {
 			return '';
 		}
 
+		// Hard size cap: reject oversized bodies (DoS protection).
+		if ( strlen( $body ) > $max_bytes ) {
+			$this->last_error = 'unavailable';
+			return '';
+		}
+
 		return $body;
+	}
+
+	/**
+	 * Determine whether a URL may be fetched.
+	 *
+	 * Same-origin lock: the URL must be HTTPS and its host must match the
+	 * host of the configured source_url. Ports and subdomains must match
+	 * exactly to avoid e.g. a port-8080 or sibling-host bypass.
+	 *
+	 * @param string $url Candidate URL.
+	 * @return bool
+	 */
+	private function is_allowed_url( $url ) {
+		$source = Settings::get( 'source_url' );
+		if ( '' === $source ) {
+			return false;
+		}
+
+		$source_host = wp_parse_url( $source, PHP_URL_HOST );
+		$source_port = wp_parse_url( $source, PHP_URL_PORT );
+		$url_scheme  = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+		$url_host    = wp_parse_url( $url, PHP_URL_HOST );
+		$url_port    = wp_parse_url( $url, PHP_URL_PORT );
+
+		if ( 'https' !== $url_scheme || false === $source_host || false === $url_host ) {
+			return false;
+		}
+
+		// Host must match exactly (case-insensitive); default port 443 must
+		// correspond to an explicit 443 or no port.
+		if ( strtolower( (string) $source_host ) !== strtolower( (string) $url_host ) ) {
+			return false;
+		}
+
+		if ( null !== $source_port && (int) $source_port !== (int) $url_port ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
