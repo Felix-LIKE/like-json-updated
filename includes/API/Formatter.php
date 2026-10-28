@@ -52,8 +52,8 @@ class Formatter {
 	public function accordion( $data, $ressources = 'link' ) {
 		$items = array();
 		foreach ( $data as $record ) {
-			$title = isset( $record['titel'] ) ? $record['titel'] : '';
-			$id    = isset( $record['id'] ) ? $record['id'] : '';
+			$title   = isset( $record['titel'] ) ? $record['titel'] : '';
+			$id      = isset( $record['id'] ) ? $record['id'] : '';
 			$items[] = array(
 				'title'   => $title . ' (ID: ' . $id . ')',
 				'content' => $this->record_html( $record, $ressources ),
@@ -97,7 +97,7 @@ class Formatter {
 	private function render_rrze_accordion_blocks( $items ) {
 		$this->enqueue_rrze_accordion_assets();
 		$accordion_id = wp_unique_id( 'like-json-accordion-' );
-		$blocks = '<!-- wp:rrze-elements/collapsibles -->';
+		$blocks       = '<!-- wp:rrze-elements/collapsibles -->';
 
 		foreach ( $items as $index => $item ) {
 			$jump_name  = $accordion_id . '-' . ( $index + 1 );

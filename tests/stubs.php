@@ -188,7 +188,7 @@ function esc_html( $text ) {
 	return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
 }
 
-function seems_utf8( $str ) {
+function wp_is_valid_utf8( $str ) {
 	return 1 === preg_match( '//u', $str );
 }
 

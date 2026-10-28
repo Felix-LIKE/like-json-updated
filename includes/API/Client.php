@@ -101,7 +101,7 @@ class Client {
 		$sequence = $matches[0];
 		$repaired = $this->convert_windows_1252_to_utf8( $sequence );
 
-		return false !== $repaired && seems_utf8( $repaired ) ? $repaired : $sequence;
+		return false !== $repaired && wp_is_valid_utf8( $repaired ) ? $repaired : $sequence;
 	}
 
 	/**
