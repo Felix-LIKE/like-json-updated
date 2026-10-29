@@ -172,7 +172,9 @@ der Anfragen zu begrenzen.
   Da die Beschränkung über die Einstellung (nicht den Code) wirkt, kann das Plugin ohne
   Codeänderung auf einen anderen oder zusätzlichen LIKE-Server umgestellt werden.
 - **https-Pflicht für source_url:** Die Einstellung „source_url" akzeptiert nur noch
-  `https://`-Adressen; nicht-HTTPS-Adressen werden abgelehnt.
+  `https://`-Adressen; nicht-HTTPS-Adressen werden abgelehnt. Beim Update von einer
+  älteren Version wird eine noch gespeicherte `http://`-Quelle **automatisch** auf
+  `https://` korrigiert (Migration läuft einmalig beim ersten Laden nach dem Update).
 - **PDF-Magic-Bytes:** Im base64-Modus wird eine PDF nur dann eingebettet, wenn der
   abgerufene Inhalt tatsächlich mit den PDF-Magic-Bytes (`%PDF-`) beginnt. Andernfalls
   wird auf einen einfachen Link zurückgefallen.

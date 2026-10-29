@@ -28,7 +28,7 @@ require_once __DIR__ . '/stubs.php';
 
 // Constants normally defined in like-json.php; define them here for the test harness.
 if ( ! defined( 'LIKE_JSON_VERSION' ) ) {
-	define( 'LIKE_JSON_VERSION', '2.0.0' );
+	define( 'LIKE_JSON_VERSION', '2.1.0' );
 }
 if ( ! defined( 'LIKE_JSON_DIR' ) ) {
 	define( 'LIKE_JSON_DIR', dirname( __DIR__ ) . '/' );
@@ -149,6 +149,64 @@ t_eq( 10, Settings::get( 'timeout' ), 'multisite: network option is ignored' );
 update_option( Settings::OPTION_NAME, array( 'timeout' => 25 ) );
 t_eq( 25, Settings::get( 'timeout' ), 'multisite: site-local option is used' );
 test_reset();
+
+// ---------------------------------------------------------------- Migration.
+echo "\n== Migration (v2.1.0 https source_url repair) ==\n";
+
+// A stale http:// source_url (e.g. left over from the 1.6.x default) is
+// repaired to https:// when the plugin is updated to v2.1.0+.
+test_reset();
+update_option( Settings::VERSION_OPTION_NAME, '2.0.1' ); // pre-2.1.0.
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'http://like35.like.e-technik.uni-erlangen.de/json/' ) );
+\LIKE_Json\Main::instance()->maybe_migrate();
+t_eq( 'https://like35.like.e-technik.uni-erlangen.de/json/', Settings::get( 'source_url' ), 'migration rewrites stale http:// source_url to https://' );
+t_eq( LIKE_JSON_VERSION, get_option( Settings::VERSION_OPTION_NAME ), 'migration records current version' );
+
+// An already-correct https source_url is left untouched.
+test_reset();
+update_option( Settings::VERSION_OPTION_NAME, '2.0.1' );
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'https://like35.like.e-technik.uni-erlangen.de/json/' ) );
+\LIKE_Json\Main::instance()->maybe_migrate();
+t_eq( 'https://like35.like.e-technik.uni-erlangen.de/json/', Settings::get( 'source_url' ), 'migration leaves an https source_url untouched' );
+
+// A custom https host (any future server) is preserved.
+test_reset();
+update_option( Settings::VERSION_OPTION_NAME, '2.0.1' );
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'https://server-b.example.org/json/' ) );
+\LIKE_Json\Main::instance()->maybe_migrate();
+t_eq( 'https://server-b.example.org/json/', Settings::get( 'source_url' ), 'migration preserves a custom https host (no code change per server)' );
+
+// http:// on a custom host is also repaired (https-only is universal).
+test_reset();
+update_option( Settings::VERSION_OPTION_NAME, '2.0.1' );
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'http://server-b.example.org/json/' ) );
+\LIKE_Json\Main::instance()->maybe_migrate();
+t_eq( 'https://server-b.example.org/json/', Settings::get( 'source_url' ), 'migration rewrites http:// to https:// on any host' );
+
+// The migration does not re-run once the version is current.
+test_reset();
+update_option( Settings::VERSION_OPTION_NAME, LIKE_JSON_VERSION );
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'http://like35.like.e-technik.uni-erlangen.de/json/' ) );
+\LIKE_Json\Main::instance()->maybe_migrate();
+t_eq( 'http://like35.like.e-technik.uni-erlangen.de/json/', Settings::get( 'source_url' ), 'migration does not re-run at the current version' );
+
+// A fresh install (no version option) also gets the repair.
+test_reset();
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'http://like35.like.e-technik.uni-erlangen.de/json/' ) );
+\LIKE_Json\Main::instance()->maybe_migrate();
+t_eq( 'https://like35.like.e-technik.uni-erlangen.de/json/', Settings::get( 'source_url' ), 'migration repairs source_url on a fresh install with no version marker' );
+
+// After migration, the plugin's Client builds https URLs that pass the
+// same-origin lock and fetch data (no regressions in the fetch path).
+test_reset();
+update_option( Settings::VERSION_OPTION_NAME, '2.0.1' );
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'http://like35.like.e-technik.uni-erlangen.de/json/' ) );
+\LIKE_Json\Main::instance()->maybe_migrate();
+$client = new Client();
+test_queue_response( '[{"id":"1"}]', 200 );
+t_eq( array( array( 'id' => '1' ) ), $client->get_json( 'bachelorarbeiten' ), 'post-migration get_json builds a valid https URL' );
+test_reset();
+
 
 // --------------------------------------------------------------- HTTP / Client.
 echo "\n== Client (HTTP) ==\n";

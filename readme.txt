@@ -54,6 +54,9 @@ embedded as base64 data. This saves bandwidth and is the recommended setting.
   targets. The host stays freely configurable, so pointing the plugin at a
   new or additional LIKE server requires no code change - just the setting.
 * Security: The "source_url" setting now rejects non-HTTPS URLs (https only).
+* Security: On update, a stale "http://" source_url stored by older versions is
+  automatically rewritten to "https://" (one-time migration), so upgrading never
+  silently breaks data collection.
 * Security: base64 PDFs are only embedded when the fetched body actually starts
   with the PDF magic bytes ("%PDF-"); anything else falls back to a plain link.
 * Security: Hard response size caps (JSON 2 MiB, PDFs 5 MiB, absolute guard
