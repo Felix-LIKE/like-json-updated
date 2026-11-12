@@ -12,6 +12,7 @@
 namespace LIKE_Json\API;
 
 use LIKE_Json\Config\Settings;
+use LIKE_Json\Log\Logger;
 
 /**
  * Remote JSON client.
@@ -69,16 +70,47 @@ class Client {
 		$source = Settings::get( 'source_url' );
 		$url    = trailingslashit( $source ) . $endpoint;
 
+		Logger::info(
+			'Hole JSON-Daten von {url}',
+			array(
+				'endpoint' => $endpoint,
+				'url'      => $url,
+			)
+		);
+
 		$body = $this->fetch_body( $url );
 		if ( '' === $body ) {
+			Logger::warning(
+				'Keine Daten von {url} erhalten (Status: {error})',
+				array(
+					'url'   => $url,
+					'error' => $this->last_error,
+				)
+			);
 			return '';
 		}
 
 		$data = json_decode( $body, true );
 		if ( ! is_array( $data ) ) {
 			$this->last_error = 'invalid_data';
+			Logger::error(
+				'JSON von {url} ist ungültig (kein Array)',
+				array(
+					'url'        => $url,
+					'body_bytes' => strlen( $body ),
+				)
+			);
 			return '';
 		}
+
+		Logger::info(
+			'{count} Datensätze von {endpoint} empfangen',
+			array(
+				'endpoint' => $endpoint,
+				'url'      => $url,
+				'count'    => count( $data ),
+			)
+		);
 
 		return $this->normalize_encoding( $data );
 	}
@@ -164,6 +196,10 @@ class Client {
 		$cache_key        = 'like_json_fetch_' . md5( $url );
 		$cached           = get_transient( $cache_key );
 		if ( false !== $cached ) {
+			Logger::info(
+				'Liefere {url} aus dem Cache',
+				array( 'url' => $url )
+			);
 			return $cached;
 		}
 
@@ -216,6 +252,15 @@ class Client {
 		// server into a proxy for arbitrary targets.
 		if ( ! $this->is_allowed_url( $url ) ) {
 			$this->last_error = 'unavailable';
+			Logger::error(
+				'Verbindung zu {url} abgelehnt: URL ist nicht HTTPS oder nicht auf dem Host von source_url (Same-Origin-Lock)',
+				array(
+					'url'        => $url,
+					'source_url' => Settings::get( 'source_url' ),
+					'error'      => 'unavailable',
+					'reason'     => 'same_origin_lock',
+				)
+			);
 			return '';
 		}
 
@@ -230,6 +275,16 @@ class Client {
 			'limit_response_size' => min( $max_bytes, self::MAX_ABSOLUTE_BYTES ),
 		);
 
+		Logger::info(
+			'Oeffne Verbindung zu {url}',
+			array(
+				'url'        => $url,
+				'timeout'    => $timeout,
+				'user-agent' => $args['user-agent'],
+				'max_bytes'  => $args['limit_response_size'],
+			)
+		);
+
 		// Attach the intermediate certificate for this request only.
 		add_filter( 'http_api_curl', array( $this, 'set_cainfo' ) );
 		$response = wp_safe_remote_get( $url, $args );
@@ -238,26 +293,67 @@ class Client {
 		if ( is_wp_error( $response ) ) {
 			$message          = $response->get_error_message();
 			$this->last_error = $this->is_timeout_error( $message ) ? 'timeout' : 'unavailable';
+			Logger::error(
+				'Verbindung zu {url} fehlgeschlagen: {message}',
+				array(
+					'url'     => $url,
+					'message' => $message,
+					'error'   => $this->last_error,
+				)
+			);
 			return '';
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
 		if ( $code < 200 || $code >= 300 ) {
 			$this->last_error = 'unavailable';
+			Logger::error(
+				'Verbindung zu {url} lieferte HTTP-Status {code}',
+				array(
+					'url'   => $url,
+					'code'  => $code,
+					'error' => 'unavailable',
+				)
+			);
 			return '';
 		}
 
 		$body = wp_remote_retrieve_body( $response );
 		if ( ! is_string( $body ) || '' === $body ) {
 			$this->last_error = 'unavailable';
+			Logger::error(
+				'Verbindung zu {url} lieferte eine leere Antwort',
+				array(
+					'url'   => $url,
+					'error' => 'unavailable',
+				)
+			);
 			return '';
 		}
 
 		// Hard size cap: reject oversized bodies (DoS protection).
 		if ( strlen( $body ) > $max_bytes ) {
 			$this->last_error = 'unavailable';
+			Logger::error(
+				'Verbindung zu {url} lieferte eine zu große Antwort ({bytes} Bytes, Limit {max_bytes})',
+				array(
+					'url'       => $url,
+					'bytes'     => strlen( $body ),
+					'max_bytes' => $max_bytes,
+					'error'     => 'unavailable',
+				)
+			);
 			return '';
 		}
+
+		Logger::info(
+			'Antwort von {url} erhalten ({bytes} Bytes, HTTP {code})',
+			array(
+				'url'   => $url,
+				'bytes' => strlen( $body ),
+				'code'  => $code,
+			)
+		);
 
 		return $body;
 	}

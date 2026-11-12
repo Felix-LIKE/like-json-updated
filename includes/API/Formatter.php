@@ -10,6 +10,8 @@
 
 namespace LIKE_Json\API;
 
+use LIKE_Json\Log\Logger;
+
 /**
  * Formats records as HTML list or accordion markup.
  */
@@ -215,9 +217,34 @@ class Formatter {
 			$client = new Client();
 			$body   = $client->fetch_pdf( esc_url_raw( $pdf_url ) );
 			if ( ! empty( $body ) && 0 === strpos( $body, '%PDF-' ) ) {
+				Logger::info(
+					'PDF {url} eingebettet als base64 ({bytes} Bytes)',
+					array(
+						'url'   => $pdf_url,
+						'bytes' => strlen( $body ),
+					)
+				);
 				// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Intentional: optional PDF embedding as base64 data URI (feature requested by the plugin's ressources="base64" mode).
 				$href = 'data:application/pdf;base64,' . chunk_split( base64_encode( $body ) );
 				return '<li><b>' . $label . ': </b><a class="like-json-pdf" href="' . $href . '" download="Aushang.pdf">' . esc_html__( 'Aushang', 'like-json' ) . '</a></li>';
+			}
+
+			if ( ! empty( $body ) ) {
+				Logger::warning(
+					'PDF {url} nicht eingebettet: Antwort beginnt nicht mit den PDF-Magic-Bytes',
+					array(
+						'url'  => $pdf_url,
+						'head' => substr( $body, 0, 8 ),
+					)
+				);
+			} else {
+				Logger::warning(
+					'PDF {url} konnte nicht geladen werden, nutze einfachen Link',
+					array(
+						'url'   => $pdf_url,
+						'error' => $client->get_last_error(),
+					)
+				);
 			}
 		}
 

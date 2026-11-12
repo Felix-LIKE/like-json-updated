@@ -28,7 +28,7 @@ require_once __DIR__ . '/stubs.php';
 
 // Constants normally defined in like-json.php; define them here for the test harness.
 if ( ! defined( 'LIKE_JSON_VERSION' ) ) {
-	define( 'LIKE_JSON_VERSION', '2.1.0' );
+	define( 'LIKE_JSON_VERSION', '2.1.1' );
 }
 if ( ! defined( 'LIKE_JSON_DIR' ) ) {
 	define( 'LIKE_JSON_DIR', dirname( __DIR__ ) . '/' );
@@ -406,11 +406,32 @@ test_reset();
 test_queue_response( '%PDF-1.4 fake pdf content', 200 );
 $base64_html = $formatter->list( array( $record ), 'base64' );
 t_assert( false !== strpos( $base64_html, 'data:application/pdf;base64,' ), 'base64 mode: emits data URI' );
+$pdf_info = like_json_test_get_log( 'info' );
+$embedded = array_values(
+	array_filter(
+		$pdf_info,
+		function ( $entry ) {
+			return false !== strpos( $entry['message'], 'eingebettet' );
+		}
+	)
+);
+t_assert( count( $embedded ) >= 1, 'base64 success logs an info entry for the embedded PDF' );
+t_eq( 'https://example.test/x.pdf', $embedded[0]['context']['url'], 'PDF embed log carries the PDF URL (no PII)' );
 
 // base64 mode with failed fetch -> falls back to plain link.
 test_reset();
 $base64_fail = $formatter->list( array( $record ), 'base64' );
 t_assert( false !== strpos( $base64_fail, 'href="https://example.test/x.pdf"' ), 'base64 mode fetch fail -> falls back to link' );
+$pdf_warn = like_json_test_get_log( 'warning' );
+$fallback = array_values(
+	array_filter(
+		$pdf_warn,
+		function ( $entry ) {
+			return false !== strpos( $entry['message'], 'konnte nicht geladen werden' );
+		}
+	)
+);
+t_assert( count( $fallback ) >= 1, 'base64 fetch fail logs a warning for the fallback to a plain link' );
 
 // SSRF hardening: base64 mode must not fetch off-host or non-HTTPS PDFs.
 $record_offhost = array_merge(
@@ -466,6 +487,108 @@ test_queue_response_timeout();
 $html_timeout = $shortcode->render( array( 'task' => 'bachelorarbeiten' ) );
 t_assert( false !== strpos( $html_timeout, 'Zeitlimit überschritten' ), 'timeout -> helpful error message' );
 t_assert( false !== strpos( $html_timeout, 'role="alert"' ), 'timeout message is announced to assistive technology' );
+
+// --------------------------------------------------------- Logging (RRZE-Log).
+// The plugin emits structured diagnostics through the RRZE-Log hooks at every
+// connection point. Assert the captured entries (level, message, context) for
+// the success and each failure path so the diagnosis stays regression-safe.
+echo "\n== Logging (RRZE-Log hooks) ==\n";
+
+// Successful fetch: info entries for the attempt and the received data.
+test_reset();
+$client = new Client();
+test_queue_response( '[{"id":"1","titel":"T"}]', 200 );
+$client->get_json( 'bachelorarbeiten' );
+$info = like_json_test_get_log( 'info' );
+t_assert( count( $info ) >= 2, 'successful fetch emits info entries' );
+t_assert( false !== strpos( $info[0]['message'], 'Hole JSON-Daten von {url}' ), 'logs the fetch start with a {url} placeholder' );
+t_eq( 'like-json', $info[0]['context']['plugin'], 'every log entry carries the plugin context key' );
+t_eq( 'https://example.test/json/bachelorarbeiten', $info[0]['context']['url'], 'log context includes the requested URL' );
+t_assert( false !== strpos( $info[1]['message'], 'Oeffne Verbindung zu {url}' ), 'logs the connection attempt (RRZE example wording)' );
+t_assert( isset( $info[1]['context']['timeout'] ) && isset( $info[1]['context']['max_bytes'] ), 'connection log carries timeout and size cap' );
+$last = end( $info );
+t_assert( false !== strpos( $last['message'], '{count} Datensätze' ), 'logs the number of received records' );
+
+// Same-origin rejection (the highest-value diagnostic: reveals a stale
+// http:// source_url, which otherwise silently breaks data collection).
+test_reset();
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'https://example.test/json/' ) );
+$client = new Client();
+test_queue_response( '[{"id":"1"}]', 200 );
+$client->fetch_body( 'https://evil.example.net/json/bachelorarbeiten' );
+$errors = like_json_test_get_log( 'error' );
+t_assert( count( $errors ) >= 1, 'same-origin rejection logs an error entry' );
+t_assert( false !== strpos( $errors[0]['message'], 'abgelehnt' ), 'same-origin rejection message mentions the rejection' );
+t_eq( 'same_origin_lock', $errors[0]['context']['reason'], 'rejection log carries the same_origin_lock reason' );
+t_eq( 'like-json', $errors[0]['context']['plugin'], 'rejection log carries the plugin context key' );
+t_eq( 'https://evil.example.net/json/bachelorarbeiten', $errors[0]['context']['url'], 'rejection log includes the attempted URL' );
+
+// Timeout: error entry with the timeout error status.
+test_reset();
+$client = new Client();
+test_queue_response_timeout();
+$client->get_json( 'bachelorarbeiten' );
+$errors = like_json_test_get_log( 'error' );
+t_assert( count( $errors ) >= 1, 'timeout logs an error entry' );
+t_eq( 'timeout', $errors[0]['context']['error'], 'timeout log carries the timeout error status' );
+t_assert( false !== strpos( $errors[0]['message'], 'fehlgeschlagen' ), 'timeout message says the connection failed' );
+
+// Non-2xx response: error entry with the HTTP status code.
+test_reset();
+$client = new Client();
+test_queue_response( 'server error', 500 );
+$client->get_json( 'bachelorarbeiten' );
+$errors = like_json_test_get_log( 'error' );
+t_assert( count( $errors ) >= 1, 'non-2xx logs an error entry' );
+t_eq( 500, $errors[0]['context']['code'], 'non-2xx log carries the HTTP status code' );
+
+// Invalid JSON: error entry naming the endpoint (after a successful fetch).
+test_reset();
+$client = new Client();
+test_queue_response( 'not-json', 200 );
+$client->get_json( 'bachelorarbeiten' );
+$errors = like_json_test_get_log( 'error' );
+t_assert( count( $errors ) >= 1, 'invalid JSON logs an error entry' );
+t_assert( false !== strpos( $errors[0]['message'], 'ungültig' ), 'invalid JSON message names the validation failure' );
+
+// Oversized response: error entry with the byte counts.
+test_reset();
+$client = new Client();
+test_queue_response( str_repeat( 'x', Client::MAX_JSON_BYTES + 1 ), 200 );
+$client->get_json( 'bachelorarbeiten' );
+$errors = like_json_test_get_log( 'error' );
+t_assert( count( $errors ) >= 1, 'oversized response logs an error entry' );
+t_assert( isset( $errors[0]['context']['bytes'] ) && isset( $errors[0]['context']['max_bytes'] ), 'oversized log carries byte counts' );
+t_assert( false !== strpos( $errors[0]['message'], 'zu große Antwort' ), 'oversized message says the response was too large' );
+
+// Cache hit: an info entry is emitted without any HTTP request.
+test_reset();
+$client = new Client();
+test_queue_response( '[{"id":"1"}]', 200 );
+$client->get_json( 'bachelorarbeiten' );
+$queue_after_first = count( $GLOBALS['__http_queue'] );
+$client->get_json( 'bachelorarbeiten' );
+$info = like_json_test_get_log( 'info' );
+$cached = array_values(
+	array_filter(
+		$info,
+		function ( $entry ) {
+			return false !== strpos( $entry['message'], 'Cache' );
+		}
+	)
+);
+t_assert( count( $cached ) >= 1, 'cache hit logs an info entry' );
+t_eq( $queue_after_first, count( $GLOBALS['__http_queue'] ), 'cache hit makes no second HTTP request' );
+
+// No PII: log messages and context only contain URLs, statuses and counts.
+test_reset();
+$client = new Client();
+test_queue_response( '[{"id":"1","titel":"Geheimname","beschreibung":"Privatdaten"}]', 200 );
+$client->get_json( 'bachelorarbeiten' );
+$log_all = like_json_test_get_log();
+$joined  = wp_json_encode( $log_all );
+t_assert( false === strpos( $joined, 'Geheimname' ), 'log does not contain record payloads (titles)' );
+t_assert( false === strpos( $joined, 'Privatdaten' ), 'log does not contain record payloads (descriptions)' );
 
 // ------------------------------------------------------------------ Summary.
 echo "\n========================================\n";
