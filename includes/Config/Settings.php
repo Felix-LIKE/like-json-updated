@@ -118,7 +118,16 @@ class Settings {
 					// Trim first: esc_url_raw() does not strip surrounding
 					// whitespace and would otherwise URL-encode it into the
 					// saved value (breaking the endpoint URL).
-					$clean[ $key ] = esc_url_raw( trim( (string) $value ) );
+					$url = esc_url_raw( trim( (string) $value ) );
+
+					// SSRF hardening: the data source must be HTTPS. The host
+					// remains freely configurable so the plugin can be pointed
+					// at any (future) LIKE server without a code change; only
+					// the transport is restricted.
+					if ( '' !== $url && 0 !== stripos( $url, 'https://' ) ) {
+						$url = '';
+					}
+					$clean[ $key ] = $url;
 					break;
 				case 'timeout':
 					$clean[ $key ] = max( 1, min( 60, absint( $value ) ) );

@@ -4,7 +4,7 @@ Tags: abschlussarbeiten, block, shortcode, university, research
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.0.1
+Stable tag: 2.1.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -45,6 +45,32 @@ With `ressources="link"` PDF files are provided as direct links instead of being
 embedded as base64 data. This saves bandwidth and is the recommended setting.
 
 == Changelog ==
+
+= 2.1.1 =
+* New: Diagnostic logging via the RRZE-Log plugin (https://github.com/RRZE-Webteam/rrze-log).
+  The plugin emits do_action( 'rrze.log.info|warning|error', $message, $context ) at every
+  connection point (JSON fetch, HTTP request, cache, PDF embed), so support can trace why a
+  site does not get data. Logs land in wp-content/log/rrze-log/ (info.log, warning.log,
+  error.log) and each entry carries the context key "plugin" => "like-json" for filtering.
+  No personal data is logged - only URLs, HTTP status codes, byte counts and internal error
+  statuses. Logging is a thin, always-on wrapper; it costs nothing measurable when RRZE-Log
+  is not installed (do_action with no listeners).
+
+= 2.1.0 =
+* Security: SSRF hardening - the plugin now only ever fetches HTTPS URLs from
+  the host configured in "source_url" (same-origin lock). This applies to the
+  JSON endpoints and to base64 PDF embeds alike, and prevents a malicious
+  source_url or pdf field from turning the server into a proxy for arbitrary
+  targets. The host stays freely configurable, so pointing the plugin at a
+  new or additional LIKE server requires no code change - just the setting.
+* Security: The "source_url" setting now rejects non-HTTPS URLs (https only).
+* Security: On update, a stale "http://" source_url stored by older versions is
+  automatically rewritten to "https://" (one-time migration), so upgrading never
+  silently breaks data collection.
+* Security: base64 PDFs are only embedded when the fetched body actually starts
+  with the PDF magic bytes ("%PDF-"); anything else falls back to a plain link.
+* Security: Hard response size caps (JSON 2 MiB, PDFs 5 MiB, absolute guard
+  rail 10 MiB) are enforced at request time; oversized bodies are rejected.
 
 = 2.0.1 =
 * Security: HTTPS failure no longer falls back to plain HTTP (removes a downgrade risk).

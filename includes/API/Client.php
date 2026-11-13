@@ -12,6 +12,7 @@
 namespace LIKE_Json\API;
 
 use LIKE_Json\Config\Settings;
+use LIKE_Json\Log\Logger;
 
 /**
  * Remote JSON client.
@@ -24,6 +25,30 @@ class Client {
 	 * @var int
 	 */
 	const CACHE_TTL = 3600; // 1 hour.
+
+	/**
+	 * Hard cap for JSON responses (2 MiB).
+	 *
+	 * @var int
+	 */
+	const MAX_JSON_BYTES = 2097152;
+
+	/**
+	 * Hard cap for PDF responses (5 MiB).
+	 *
+	 * @var int
+	 */
+	const MAX_PDF_BYTES = 5242880;
+
+	/**
+	 * Hard cap applied to every response regardless of type.
+	 *
+	 * Guard rail for edge cases (e.g. a redirected response) so a single
+	 * oversized body can never exhaust server memory.
+	 *
+	 * @var int
+	 */
+	const MAX_ABSOLUTE_BYTES = 10485760; // 10 MiB.
 
 	/**
 	 * Last request error type.
@@ -45,16 +70,47 @@ class Client {
 		$source = Settings::get( 'source_url' );
 		$url    = trailingslashit( $source ) . $endpoint;
 
+		Logger::info(
+			'Hole JSON-Daten von {url}',
+			array(
+				'endpoint' => $endpoint,
+				'url'      => $url,
+			)
+		);
+
 		$body = $this->fetch_body( $url );
 		if ( '' === $body ) {
+			Logger::warning(
+				'Keine Daten von {url} erhalten (Status: {error})',
+				array(
+					'url'   => $url,
+					'error' => $this->last_error,
+				)
+			);
 			return '';
 		}
 
 		$data = json_decode( $body, true );
 		if ( ! is_array( $data ) ) {
 			$this->last_error = 'invalid_data';
+			Logger::error(
+				'JSON von {url} ist ungültig (kein Array)',
+				array(
+					'url'        => $url,
+					'body_bytes' => strlen( $body ),
+				)
+			);
 			return '';
 		}
+
+		Logger::info(
+			'{count} Datensätze von {endpoint} empfangen',
+			array(
+				'endpoint' => $endpoint,
+				'url'      => $url,
+				'count'    => count( $data ),
+			)
+		);
 
 		return $this->normalize_encoding( $data );
 	}
@@ -101,7 +157,7 @@ class Client {
 		$sequence = $matches[0];
 		$repaired = $this->convert_windows_1252_to_utf8( $sequence );
 
-		return false !== $repaired && seems_utf8( $repaired ) ? $repaired : $sequence;
+		return false !== $repaired && wp_is_valid_utf8( $repaired ) ? $repaired : $sequence;
 	}
 
 	/**
@@ -126,7 +182,11 @@ class Client {
 	}
 
 	/**
-	 * Fetch a raw body from a URL with caching and error handling.
+	 * Fetch a raw JSON body from a URL with caching and error handling.
+	 *
+	 * The URL is expected to be one of the plugin's own endpoints (built from
+	 * the configured source_url). Same-origin, HTTPS and size enforcement are
+	 * applied in request().
 	 *
 	 * @param string $url URL.
 	 * @return string
@@ -136,16 +196,34 @@ class Client {
 		$cache_key        = 'like_json_fetch_' . md5( $url );
 		$cached           = get_transient( $cache_key );
 		if ( false !== $cached ) {
+			Logger::info(
+				'Liefere {url} aus dem Cache',
+				array( 'url' => $url )
+			);
 			return $cached;
 		}
 
-		$body = $this->request( $url );
+		$body = $this->request( $url, self::MAX_JSON_BYTES );
 
 		if ( '' !== $body ) {
 			set_transient( $cache_key, $body, self::CACHE_TTL );
 		}
 
 		return $body;
+	}
+
+	/**
+	 * Fetch a PDF body (for ressources="base64") with a larger size cap.
+	 *
+	 * Same-origin, HTTPS and size enforcement are applied in request(). The
+	 * result is intentionally not cached in transients (PDFs can be large).
+	 *
+	 * @param string $url PDF URL.
+	 * @return string
+	 */
+	public function fetch_pdf( $url ) {
+		$this->last_error = '';
+		return $this->request( $url, self::MAX_PDF_BYTES );
 	}
 
 	/**
@@ -160,15 +238,51 @@ class Client {
 	/**
 	 * Perform one HTTP request via the WordPress HTTP API.
 	 *
-	 * @param string $url URL.
+	 * SSRF hardening: only HTTPS URLs on the host of the configured
+	 * source_url are fetched. Oversized responses are rejected.
+	 *
+	 * @param string $url       URL.
+	 * @param int    $max_bytes Maximum accepted body size in bytes.
 	 * @return string Body on success, empty string on failure.
 	 */
-	private function request( $url ) {
+	private function request( $url, $max_bytes ) {
+		// SSRF hardening: the plugin only ever fetches HTTPS URLs from the
+		// host configured as its own data source (same-origin lock). This
+		// prevents a malicious source_url or pdf field from turning the
+		// server into a proxy for arbitrary targets.
+		if ( ! $this->is_allowed_url( $url ) ) {
+			$this->last_error = 'unavailable';
+			Logger::error(
+				'Verbindung zu {url} abgelehnt: URL ist nicht HTTPS oder nicht auf dem Host von source_url (Same-Origin-Lock)',
+				array(
+					'url'        => $url,
+					'source_url' => Settings::get( 'source_url' ),
+					'error'      => 'unavailable',
+					'reason'     => 'same_origin_lock',
+				)
+			);
+			return '';
+		}
+
 		$timeout = max( 1, min( 60, absint( Settings::get( 'timeout' ) ) ) );
 		$args    = array(
-			'timeout'     => $timeout,
-			'user-agent'  => Settings::get( 'user_agent' ),
-			'redirection' => 3,
+			'timeout'             => $timeout,
+			'user-agent'          => Settings::get( 'user_agent' ),
+			'redirection'         => 3,
+			// Let the transport stream up to the cap instead of buffering the
+			// whole body (supported by the cURL transport). The strlen() check
+			// below is the authoritative guard regardless of transport.
+			'limit_response_size' => min( $max_bytes, self::MAX_ABSOLUTE_BYTES ),
+		);
+
+		Logger::info(
+			'Oeffne Verbindung zu {url}',
+			array(
+				'url'        => $url,
+				'timeout'    => $timeout,
+				'user-agent' => $args['user-agent'],
+				'max_bytes'  => $args['limit_response_size'],
+			)
 		);
 
 		// Attach the intermediate certificate for this request only.
@@ -179,22 +293,108 @@ class Client {
 		if ( is_wp_error( $response ) ) {
 			$message          = $response->get_error_message();
 			$this->last_error = $this->is_timeout_error( $message ) ? 'timeout' : 'unavailable';
+			Logger::error(
+				'Verbindung zu {url} fehlgeschlagen: {message}',
+				array(
+					'url'     => $url,
+					'message' => $message,
+					'error'   => $this->last_error,
+				)
+			);
 			return '';
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
 		if ( $code < 200 || $code >= 300 ) {
 			$this->last_error = 'unavailable';
+			Logger::error(
+				'Verbindung zu {url} lieferte HTTP-Status {code}',
+				array(
+					'url'   => $url,
+					'code'  => $code,
+					'error' => 'unavailable',
+				)
+			);
 			return '';
 		}
 
 		$body = wp_remote_retrieve_body( $response );
 		if ( ! is_string( $body ) || '' === $body ) {
 			$this->last_error = 'unavailable';
+			Logger::error(
+				'Verbindung zu {url} lieferte eine leere Antwort',
+				array(
+					'url'   => $url,
+					'error' => 'unavailable',
+				)
+			);
 			return '';
 		}
 
+		// Hard size cap: reject oversized bodies (DoS protection).
+		if ( strlen( $body ) > $max_bytes ) {
+			$this->last_error = 'unavailable';
+			Logger::error(
+				'Verbindung zu {url} lieferte eine zu große Antwort ({bytes} Bytes, Limit {max_bytes})',
+				array(
+					'url'       => $url,
+					'bytes'     => strlen( $body ),
+					'max_bytes' => $max_bytes,
+					'error'     => 'unavailable',
+				)
+			);
+			return '';
+		}
+
+		Logger::info(
+			'Antwort von {url} erhalten ({bytes} Bytes, HTTP {code})',
+			array(
+				'url'   => $url,
+				'bytes' => strlen( $body ),
+				'code'  => $code,
+			)
+		);
+
 		return $body;
+	}
+
+	/**
+	 * Determine whether a URL may be fetched.
+	 *
+	 * Same-origin lock: the URL must be HTTPS and its host must match the
+	 * host of the configured source_url. Ports and subdomains must match
+	 * exactly to avoid e.g. a port-8080 or sibling-host bypass.
+	 *
+	 * @param string $url Candidate URL.
+	 * @return bool
+	 */
+	private function is_allowed_url( $url ) {
+		$source = Settings::get( 'source_url' );
+		if ( '' === $source ) {
+			return false;
+		}
+
+		$source_host = wp_parse_url( $source, PHP_URL_HOST );
+		$source_port = wp_parse_url( $source, PHP_URL_PORT );
+		$url_scheme  = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+		$url_host    = wp_parse_url( $url, PHP_URL_HOST );
+		$url_port    = wp_parse_url( $url, PHP_URL_PORT );
+
+		if ( 'https' !== $url_scheme || false === $source_host || false === $url_host ) {
+			return false;
+		}
+
+		// Host must match exactly (case-insensitive); default port 443 must
+		// correspond to an explicit 443 or no port.
+		if ( strtolower( (string) $source_host ) !== strtolower( (string) $url_host ) ) {
+			return false;
+		}
+
+		if ( null !== $source_port && (int) $source_port !== (int) $url_port ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

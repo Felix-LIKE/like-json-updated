@@ -5,7 +5,7 @@
 WordPress-Plugin zur Darstellung der studentischen Arbeiten (Abschlussarbeiten) des
 Lehrstuhls für Informationstechnik mit dem Schwerpunkt Kommunikationselektronik (LIKE).
 
-**Version:** 2.0.0 · **Lizenz:** GPLv3 or later · **Sprache:** Deutsch / Englisch
+**Version:** 2.1.1 · **Lizenz:** GPLv3 or later · **Sprache:** Deutsch / Englisch
 
 > **Endnutzer-Dokumentation (webbasiert):** Dieses README ist die gepflegte, webbasierte
 > Benutzerdokumentation (siehe auch die [Plugin-Beschreibung](readme.txt)). Sie wird im
@@ -23,12 +23,13 @@ Lehrstuhls für Informationstechnik mit dem Schwerpunkt Kommunikationselektronik
 5. [Nutzung: Legacy-Shortcode](#nutzung-legacy-shortcode)
 6. [Einstellungen](#einstellungen)
 7. [Externe Dienste und Daten](#externe-dienste-und-daten)
-8. [Sicherheit](#sicherheit)
-9. [Barrierefreiheit](#barrierefreiheit)
-10. [Datenschutz](#datenschutz)
-11. [Entwicklung und Tests](#entwicklung-und-tests)
-12. [Mitwirken und Feedback](#mitwirken-und-feedback)
-13. [Copyright](#copyright)
+8. [Diagnose-Logging (RRZE-Log)](#diagnose-logging-rrze-log)
+9. [Sicherheit](#sicherheit)
+10. [Barrierefreiheit](#barrierefreiheit)
+11. [Datenschutz](#datenschutz)
+12. [Entwicklung und Tests](#entwicklung-und-tests)
+13. [Mitwirken und Feedback](#mitwirken-und-feedback)
+14. [Copyright](#copyright)
 
 ---
 
@@ -149,11 +150,48 @@ Es gibt keine netzwerkweiten Einstellungen und keine Vererbung zwischen Websites
 gemäß den [FAU-Crawler-Regeln](https://www.wp.rrze.fau.de/entwicklung/vorgaben/crawler/):
 
 ```
-FAU-LIKE-like-json/2.0.0 (+https://www.like.tf.fau.de/;mailto:like-admin@fau.de)
+FAU-LIKE-like-json/2.1.1 (+https://www.like.tf.fau.de/;mailto:like-admin@fau.de)
 ```
 
 **Caching:** Remote-Daten werden für 1 Stunde zwischengespeichert (Transient), um die Anzahl
 der Anfragen zu begrenzen.
+
+## Diagnose-Logging (RRZE-Log)
+
+Das Plugin sendet an allen Stellen, an denen es Verbindungen aufbaut, strukturierte
+Diagnose-Meldungen über die Hooks des [RRZE-Log](https://github.com/RRZE-Webteam/rrze-log)-Plugins:
+
+```php
+do_action( 'rrze.log.info', $message, $context );
+do_action( 'rrze.log.warning', $message, $context );
+do_action( 'rrze.log.error', $message, $context );
+```
+
+Sofern RRZE-Log aktiv ist, landen die Einträge in `wp-content/log/rrze-log/` (pro
+Level getrennt: `info.log`, `warning.log`, `error.log`). Jeder Eintrag trägt den
+Kontext-Schlüssel `plugin => 'like-json'` und kann damit gefiltert werden, z. B.:
+
+```php
+apply_filters( 'rrze.log.get', [ 'search' => [ 'like-json' ] ] );
+```
+
+Protokollierte Ereignisse (nur URLs, HTTP-Statuscodes, Byte-Zahlen und interne
+Fehlerstatus – **keine** personenbezogenen Daten, keine Datensatz-Inhalte):
+
+| Ebene | Meldung (Beispiel) |
+|---|---|
+| `info` | „Hole JSON-Daten von {url}" (Start des Abrufs) |
+| `info` | „Oeffne Verbindung zu {url}" (inkl. Timeout, User-Agent, Größenlimit) |
+| `info` | „Antwort von {url} erhalten ({bytes} Bytes, HTTP {code})" |
+| `info` | „{count} Datensätze von {endpoint} empfangen" |
+| `info` | „Liefere {url} aus dem Cache" |
+| `warning` | „Keine Daten von {url} erhalten (Status: {error})" |
+| `warning` | „PDF {url} konnte nicht geladen werden, nutze einfachen Link" |
+| `error` | „Verbindung zu {url} abgelehnt … (Same-Origin-Lock)" – wichtigster
+  Diagnosehinweis: zeigt z. B. eine veraltete `http://`-`source_url` |
+| `error` | „Verbindung zu {url} fehlgeschlagen: {message}" (Timeout/Netzwerk) |
+| `error` | „Verbindung zu {url} lieferte HTTP-Status {code}" |
+| `error` | „JSON von {url} ist ungültig (kein Array)" |
 
 ## Sicherheit
 
@@ -165,6 +203,21 @@ der Anfragen zu begrenzen.
   `curl`/`file_get_contents` direkt). Die HTTPS-Verbindung wird mit einem mitgelieferten
   Intermediate-Zertifikat (GEANT TLS ECC 1) aufgebaut. Bei einem HTTPS-Fehler wird der
   Abruf abgebrochen; es erfolgt kein unsicherer Fallback auf HTTP.
+- **Same-Origin-Lock (SSRF-Härtung):** Das Plugin ruft ausschließlich HTTPS-URLs auf dem
+  in „source_url" konfigurierten Host ab – sowohl für die JSON-Endpunkte als auch für
+  base64-PDF-Einbettungen. Dadurch kann weder eine manipulierte `source_url` noch ein
+  `pdf`-Feld aus den Remote-Daten den Server als Proxy für beliebige Ziele missbrauchen.
+  Da die Beschränkung über die Einstellung (nicht den Code) wirkt, kann das Plugin ohne
+  Codeänderung auf einen anderen oder zusätzlichen LIKE-Server umgestellt werden.
+- **https-Pflicht für source_url:** Die Einstellung „source_url" akzeptiert nur noch
+  `https://`-Adressen; nicht-HTTPS-Adressen werden abgelehnt. Beim Update von einer
+  älteren Version wird eine noch gespeicherte `http://`-Quelle **automatisch** auf
+  `https://` korrigiert (Migration läuft einmalig beim ersten Laden nach dem Update).
+- **PDF-Magic-Bytes:** Im base64-Modus wird eine PDF nur dann eingebettet, wenn der
+  abgerufene Inhalt tatsächlich mit den PDF-Magic-Bytes (`%PDF-`) beginnt. Andernfalls
+  wird auf einen einfachen Link zurückgefallen.
+- **Antwortgrößen-Limits:** Alle Antworten sind hart begrenzt (JSON 2 MiB, PDFs 5 MiB,
+  absolute Obergrenze 10 MiB); übermäßig große Antworten werden verworfen (DoS-Schutz).
 - **Einstellungen:** Eingaben werden validiert und sanitized; die Ausgabe wird escaped.
 - **Berechtigungen:** Die Einstellungsseiten sind serverseitig über WordPress-Capabilities
   geschützt (`manage_options`); Formulare verwenden Nonces.

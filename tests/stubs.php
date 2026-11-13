@@ -46,6 +46,78 @@ $GLOBALS['__http_queue'] = array();
  */
 $GLOBALS['__filters'] = array();
 
+/**
+ * WordPress actions registry (log capture for tests).
+ *
+ * @var array
+ */
+$GLOBALS['__actions'] = array();
+
+/**
+ * Captured RRZE-Log entries for tests.
+ *
+ * @var array
+ */
+$GLOBALS['__log'] = array();
+
+/**
+ * Capture an RRZE-Log entry fired via do_action( 'rrze.log.*' ).
+ */
+function like_json_test_capture_log() {
+	foreach ( array( 'info', 'warning', 'error', 'notice' ) as $level ) {
+		$tag = 'rrze.log.' . $level;
+		if ( ! isset( $GLOBALS['__actions'][ $tag ] ) ) {
+			$GLOBALS['__actions'][ $tag ] = array();
+		}
+		$GLOBALS['__actions'][ $tag ][] = array(
+			'callback' => function ( $message, $context = array() ) use ( $level ) {
+				$GLOBALS['__log'][] = array(
+					'level'   => $level,
+					'message' => $message,
+					'context' => $context,
+				);
+			},
+			'priority' => 10,
+		);
+	}
+}
+
+/**
+ * Get captured log entries, optionally filtered by level.
+ *
+ * @param string $level Optional level filter ('info', 'warning', 'error').
+ * @return array
+ */
+function like_json_test_get_log( $level = '' ) {
+	$entries = $GLOBALS['__log'];
+	if ( '' !== $level ) {
+		$entries = array_values(
+			array_filter(
+				$entries,
+				function ( $entry ) use ( $level ) {
+					return $entry['level'] === $level;
+				}
+			)
+		);
+	}
+	return $entries;
+}
+
+function add_action( $tag, $callback, $priority = 10 ) {
+	if ( ! isset( $GLOBALS['__actions'][ $tag ] ) ) {
+		$GLOBALS['__actions'][ $tag ] = array();
+	}
+	$GLOBALS['__actions'][ $tag ][] = array( 'callback' => $callback, 'priority' => $priority );
+}
+
+function do_action( $tag, ...$args ) {
+	if ( isset( $GLOBALS['__actions'][ $tag ] ) ) {
+		foreach ( $GLOBALS['__actions'][ $tag ] as $entry ) {
+			call_user_func_array( $entry['callback'], $args );
+		}
+	}
+}
+
 function add_filter( $tag, $callback ) {
 	$GLOBALS['__filters'][ $tag ][] = $callback;
 }
@@ -159,6 +231,12 @@ function is_multisite() {
 	return ! empty( $GLOBALS['__is_multisite'] );
 }
 
+function wp_parse_url( $url, $component = -1 ) {
+	// Mirror WordPress's wp_parse_url(): parse_url() is a core PHP function
+	// and the URL is small/trusted (admin-configured or plugin-built).
+	return parse_url( (string) $url, $component );
+}
+
 function trailingslashit( $string ) {
 	return rtrim( (string) $string, '/\\' ) . '/';
 }
@@ -188,7 +266,7 @@ function esc_html( $text ) {
 	return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
 }
 
-function seems_utf8( $str ) {
+function wp_is_valid_utf8( $str ) {
 	return 1 === preg_match( '//u', $str );
 }
 
@@ -295,7 +373,6 @@ function plugin_basename( $file ) {
 	return basename( $file );
 }
 
-function add_action() {}
 function add_options_page() { return 'toplevel_page_like-json'; }
 function add_submenu_page() { return 'settings_page_like-json'; }
 function register_setting() {}
@@ -391,4 +468,13 @@ function test_reset() {
 	$GLOBALS['__registered_blocks'] = array();
 	$GLOBALS['__last_do_blocks'] = '';
 	$GLOBALS['__wp_unique_id']   = 0;
+	$GLOBALS['__actions']       = array();
+	$GLOBALS['__log']           = array();
+
+	// Capture RRZE-Log entries for assertions.
+	like_json_test_capture_log();
+
+	// Default test data source: same host as the example.test URLs used in
+	// the HTTP tests, so the same-origin lock accepts them.
+	update_option( \LIKE_Json\Config\Settings::OPTION_NAME, array( 'source_url' => 'https://example.test/json/' ) );
 }
