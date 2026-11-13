@@ -302,6 +302,15 @@ class Client {
 					array( 'url' => $url )
 				);
 				$response = wp_safe_remote_get( $url, $fallback_args );
+			} else {
+				// The bundled chain is part of the plugin package; if it is
+				// missing the retry cannot run and the original certificate
+				// error is surfaced to the visitor. Log it so a broken
+				// packaging is diagnosable (error level: always emitted).
+				Logger::error(
+					'Zertifikatsprüfung für {url} fehlgeschlagen; HARICA-CA-Kette fehlt im Plugin-Paket',
+					array( 'url' => $url )
+				);
 			}
 		}
 

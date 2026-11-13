@@ -184,22 +184,25 @@ add_filter( 'like_json_setting_debuglogs', '__return_true' );
 ```
 
 Protokollierte Ereignisse (nur URLs, HTTP-Statuscodes, Byte-Zahlen und interne
-Fehlerstatus – **keine** personenbezogenen Daten, keine Datensatz-Inhalte):
+Fehlerstatus – **keine** personenbezogenen Daten, keine Datensatz-Inhalte).
+`error`-Meldungen werden immer ausgegeben; `info`- und `warning`-Meldungen nur
+bei aktiviertem `debuglogs`:
 
-| Ebene | Meldung (Beispiel) |
-|---|---|
-| `info` | „Hole JSON-Daten von {url}" (Start des Abrufs) |
-| `info` | „Oeffne Verbindung zu {url}" (inkl. Timeout, User-Agent, Größenlimit) |
-| `info` | „Antwort von {url} erhalten ({bytes} Bytes, HTTP {code})" |
-| `info` | „{count} Datensätze von {endpoint} empfangen" |
-| `info` | „Liefere {url} aus dem Cache" |
-| `warning` | „Keine Daten von {url} erhalten (Status: {error})" |
-| `warning` | „PDF {url} konnte nicht geladen werden, nutze einfachen Link" |
+| Ebene | Meldung (Beispiel) | Voraussetzung |
+|---|---|---|
+| `info` | „Hole JSON-Daten von {url}" (Start des Abrufs) | `debuglogs` |
+| `info` | „Oeffne Verbindung zu {url}" (inkl. Timeout, User-Agent, Größenlimit) | `debuglogs` |
+| `info` | „Antwort von {url} erhalten ({bytes} Bytes, HTTP {code})" | `debuglogs` |
+| `info` | „{count} Datensätze von {endpoint} empfangen" | `debuglogs` |
+| `info` | „Liefere {url} aus dem Cache" | `debuglogs` |
+| `warning` | „Keine Daten von {url} erhalten (Status: {error})" | `debuglogs` |
+| `warning` | „PDF {url} konnte nicht geladen werden, nutze einfachen Link" | `debuglogs` |
+| `warning` | „Zertifikatsprüfung für {url} fehlgeschlagen; erneuter Versuch mit der HARICA-CA-Kette" | `debuglogs` |
 | `error` | „Verbindung zu {url} abgelehnt … (Same-Origin-Lock)" – wichtigster
-  Diagnosehinweis: zeigt z. B. eine veraltete `http://`-`source_url` |
-| `error` | „Verbindung zu {url} fehlgeschlagen: {message}" (Timeout/Netzwerk) |
-| `error` | „Verbindung zu {url} lieferte HTTP-Status {code}" |
-| `error` | „JSON von {url} ist ungültig (kein Array)" |
+  Diagnosehinweis: zeigt z. B. eine veraltete `http://`-`source_url` | immer |
+| `error` | „Verbindung zu {url} fehlgeschlagen: {message}" (Timeout/Netzwerk) | immer |
+| `error` | „Verbindung zu {url} lieferte HTTP-Status {code}" | immer |
+| `error` | „JSON von {url} ist ungültig (kein Array)" | immer |
 
 ## Sicherheit
 

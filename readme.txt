@@ -39,6 +39,12 @@ For the German end-user documentation see the README.md in the repository root.
 Make sure the JSON source under Settings -> LIKE-Json is reachable. By default
 `https://like35.like.e-technik.uni-erlangen.de/json/` is used.
 
+If the site runs on a legacy PHP installation with an outdated CA store and the
+fetch fails with a certificate error, the plugin automatically retries once with
+the complete HARICA CA chain (verification stays enabled). A certificate problem
+can otherwise look like "no entries" - check wp-content/log/rrze-log/error.log
+with the RRZE-Log plugin for details.
+
 = What does ressources="link" mean? =
 
 With `ressources="link"` PDF files are provided as direct links instead of being
