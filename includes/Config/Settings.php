@@ -40,6 +40,7 @@ class Settings {
 			'timeout'     => 10,
 			'user_agent'  => self::default_user_agent(),
 			'crawl_limit' => 3,
+			'debuglogs'   => false,
 		);
 	}
 
@@ -137,6 +138,9 @@ class Settings {
 					break;
 				case 'user_agent':
 					$clean[ $key ] = sanitize_text_field( $value );
+					break;
+				case 'debuglogs':
+					$clean[ $key ] = in_array( $value, array( true, 1, '1', 'true', 'on' ), true );
 					break;
 				default:
 					$clean[ $key ] = sanitize_text_field( $value );

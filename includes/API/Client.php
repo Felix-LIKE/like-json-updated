@@ -269,6 +269,7 @@ class Client {
 			'timeout'             => $timeout,
 			'user-agent'          => Settings::get( 'user_agent' ),
 			'redirection'         => 3,
+			'sslverify'           => true,
 			// Let the transport stream up to the cap instead of buffering the
 			// whole body (supported by the cURL transport). The strlen() check
 			// below is the authoritative guard regardless of transport.
@@ -285,10 +286,24 @@ class Client {
 			)
 		);
 
-		// Attach the intermediate certificate for this request only.
-		add_filter( 'http_api_curl', array( $this, 'set_cainfo' ) );
 		$response = wp_safe_remote_get( $url, $args );
-		remove_filter( 'http_api_curl', array( $this, 'set_cainfo' ) );
+
+		// Some legacy PHP installations have an outdated CA store while the
+		// LIKE server uses the HARICA 2021 hierarchy. Retry certificate error
+		// 60 once with the complete HARICA chain. Host and peer verification
+		// stay enabled; this is not an insecure sslverify=false fallback.
+		if ( $this->is_certificate_error( $response ) ) {
+			$fallback_certificates = $this->harica_certificate_bundle();
+			if ( '' !== $fallback_certificates ) {
+				$fallback_args                    = $args;
+				$fallback_args['sslcertificates'] = $fallback_certificates;
+				Logger::warning(
+					'Zertifikatsprüfung für {url} fehlgeschlagen; erneuter Versuch mit der HARICA-CA-Kette',
+					array( 'url' => $url )
+				);
+				$response = wp_safe_remote_get( $url, $fallback_args );
+			}
+		}
 
 		if ( is_wp_error( $response ) ) {
 			$message          = $response->get_error_message();
@@ -411,20 +426,29 @@ class Client {
 	}
 
 	/**
-	 * Set CURLOPT_CAINFO to the bundled intermediate certificate.
+	 * Determine whether a WordPress HTTP error is a TLS trust-store error.
 	 *
-	 * Hooked via the http_api_curl filter, scoped to this plugin's requests.
-	 *
-	 * @param resource|\CurlHandle $handle cURL handle.
+	 * @param mixed $response HTTP response or WP_Error.
+	 * @return bool
 	 */
-	public function set_cainfo( $handle ) {
-		$cert = dirname( __DIR__ ) . '/certs/GEANT-TLS-ECC-1.pem';
-		if ( file_exists( $cert ) ) {
-			// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_setopt -- Intentional: WordPress has no native API to set CURLOPT_CAINFO per request. This supplies the missing intermediate certificate for HTTPS verification.
-			curl_setopt( $handle, CURLOPT_CAINFO, $cert );
-			curl_setopt( $handle, CURLOPT_SSL_VERIFYPEER, true );
-			curl_setopt( $handle, CURLOPT_SSL_VERIFYHOST, 2 );
-			// phpcs:enable
+	private function is_certificate_error( $response ) {
+		if ( ! is_wp_error( $response ) ) {
+			return false;
 		}
+
+		$message = $response->get_error_message();
+		return false !== stripos( $message, 'cURL error 60' )
+			|| false !== stripos( $message, 'certificate problem' );
 	}
+
+	/**
+	 * Get the bundled complete HARICA chain for the TLS retry.
+	 *
+	 * @return string Empty when the bundle is unavailable.
+	 */
+	private function harica_certificate_bundle() {
+		$certificates = dirname( __DIR__ ) . '/certs/HARICA-TLS-ECC-2021-chain.pem';
+		return is_readable( $certificates ) ? $certificates : '';
+	}
+
 }

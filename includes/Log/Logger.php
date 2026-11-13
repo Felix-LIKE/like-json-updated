@@ -18,6 +18,8 @@
 
 namespace LIKE_Json\Log;
 
+use LIKE_Json\Config\Settings;
+
 /**
  * Thin wrapper around the RRZE-Log action hooks.
  */
@@ -30,6 +32,10 @@ class Logger {
 	 * @param array  $context Context values; a 'plugin' key is added automatically.
 	 */
 	public static function info( $message, $context = array() ) {
+		if ( ! self::debug_enabled() ) {
+			return;
+		}
+
 		self::log( 'info', $message, $context );
 	}
 
@@ -40,6 +46,10 @@ class Logger {
 	 * @param array  $context Context values; a 'plugin' key is added automatically.
 	 */
 	public static function warning( $message, $context = array() ) {
+		if ( ! self::debug_enabled() ) {
+			return;
+		}
+
 		self::log( 'warning', $message, $context );
 	}
 
@@ -51,6 +61,15 @@ class Logger {
 	 */
 	public static function error( $message, $context = array() ) {
 		self::log( 'error', $message, $context );
+	}
+
+	/**
+	 * Determine whether diagnostic log levels are enabled.
+	 *
+	 * @return bool
+	 */
+	private static function debug_enabled() {
+		return true === Settings::get( 'debuglogs' );
 	}
 
 	/**

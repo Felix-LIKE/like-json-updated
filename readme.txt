@@ -4,7 +4,7 @@ Tags: abschlussarbeiten, block, shortcode, university, research
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.1.1
+Stable tag: 2.1.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -21,7 +21,7 @@ WordPress website.
   project works, other works, and all categories combined.
 * Display as a list or as an expandable accordion.
 * Filter by ID, supervisor and assignment status.
-* HTTPS data source with a bundled intermediate certificate (GEANT TLS ECC 1).
+* HTTPS data source with WordPress-managed certificate verification and a HARICA chain fallback for legacy CA stores.
 
 For the German end-user documentation see the README.md in the repository root.
 
@@ -46,15 +46,15 @@ embedded as base64 data. This saves bandwidth and is the recommended setting.
 
 == Changelog ==
 
+= 2.1.2 =
+* Fixed: Complete HARICA certificate chain retry for legacy CA stores on cURL error 60.
+* New: Site-local diagnostic logging option; info and warning logs are disabled by default.
+
 = 2.1.1 =
 * New: Diagnostic logging via the RRZE-Log plugin (https://github.com/RRZE-Webteam/rrze-log).
-  The plugin emits do_action( 'rrze.log.info|warning|error', $message, $context ) at every
-  connection point (JSON fetch, HTTP request, cache, PDF embed), so support can trace why a
-  site does not get data. Logs land in wp-content/log/rrze-log/ (info.log, warning.log,
-  error.log) and each entry carries the context key "plugin" => "like-json" for filtering.
-  No personal data is logged - only URLs, HTTP status codes, byte counts and internal error
-  statuses. Logging is a thin, always-on wrapper; it costs nothing measurable when RRZE-Log
-  is not installed (do_action with no listeners).
+  Errors are always logged. Info and warning diagnostics require the site-local debuglogs
+  setting to be true. No personal data is logged - only URLs, HTTP status codes, byte counts
+  and internal error statuses.
 
 = 2.1.0 =
 * Security: SSRF hardening - the plugin now only ever fetches HTTPS URLs from
@@ -96,7 +96,7 @@ embedded as base64 data. This saves bandwidth and is the recommended setting.
 * Legacy `[like]` shortcode kept for backwards compatibility.
 
 = 1.6.1 =
-* HTTPS data source by default, configurable URL, bundled intermediate certificate.
+* HTTPS data source by default with WordPress-managed certificate verification.
 
 = 1.6.0 =
 * PHP 8.x compatibility (dynamic properties, stripos fix, JSON guards).

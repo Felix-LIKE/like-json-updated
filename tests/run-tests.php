@@ -28,7 +28,7 @@ require_once __DIR__ . '/stubs.php';
 
 // Constants normally defined in like-json.php; define them here for the test harness.
 if ( ! defined( 'LIKE_JSON_VERSION' ) ) {
-	define( 'LIKE_JSON_VERSION', '2.1.1' );
+	define( 'LIKE_JSON_VERSION', '2.1.2' );
 }
 if ( ! defined( 'LIKE_JSON_DIR' ) ) {
 	define( 'LIKE_JSON_DIR', dirname( __DIR__ ) . '/' );
@@ -40,6 +40,7 @@ use LIKE_Json\API\Client;
 use LIKE_Json\API\Formatter;
 use LIKE_Json\API\Works;
 use LIKE_Json\Config\Settings;
+use LIKE_Json\Log\Logger;
 use LIKE_Json\Shortcode;
 
 $GLOBALS['__tests_run']     = 0;
@@ -109,6 +110,7 @@ echo "== Settings ==\n";
 t_assert( Settings::defaults()['timeout'] > 0, 'default timeout is positive' );
 t_eq( 'https://like35.like.e-technik.uni-erlangen.de/json/', Settings::get( 'source_url' ), 'default source_url' );
 t_eq( 10, Settings::get( 'timeout' ), 'default timeout is 10' );
+t_eq( false, Settings::get( 'debuglogs' ), 'debug logging is disabled by default' );
 
 $clean = Settings::sanitize(
 	array(
@@ -120,6 +122,7 @@ $clean = Settings::sanitize(
 t_eq( '', $clean['source_url'], 'sanitize strips javascript: URL (esc_url_raw returns empty)' );
 t_eq( 60, $clean['timeout'], 'sanitize clamps timeout 99 to max 60' );
 t_eq( 10, $clean['crawl_limit'], 'sanitize clamps crawl_limit 500 to max 10' );
+t_eq( true, Settings::sanitize( array( 'debuglogs' => '1' ) )['debuglogs'], 'sanitize enables debug logging for true values' );
 
 // Trailing/leading whitespace in source_url must be trimmed, not URL-encoded.
 $clean_ws = Settings::sanitize(
@@ -261,6 +264,16 @@ t_eq( '', $data, 'HTTPS failure does not downgrade to HTTP' );
 t_eq( 'unavailable', $client->get_last_error(), 'network error is reported as unavailable' );
 t_eq( 0, count( $GLOBALS['__http_queue'] ), 'HTTPS failure makes no second HTTP request' );
 
+// TLS error 60 retries once with the complete HARICA CA chain, never by
+// disabling certificate verification.
+test_reset();
+$client = new Client();
+$GLOBALS['__http_queue'][] = new WP_Error( 'http_request_failed', 'cURL error 60: SSL certificate problem: unable to get local issuer certificate' );
+test_queue_response( '[{"id":"1"}]', 200 );
+t_eq( array( array( 'id' => '1' ) ), $client->get_json( 'bachelorarbeiten' ), 'TLS error 60 retries with the HARICA CA chain' );
+t_eq( true, $GLOBALS['__last_request']['args']['sslverify'], 'TLS retry keeps certificate verification enabled' );
+t_assert( isset( $GLOBALS['__last_request']['args']['sslcertificates'] ), 'TLS retry supplies the HARICA CA chain' );
+
 // Timeout is exposed as a distinct, safe error status.
 test_reset();
 $client = new Client();
@@ -309,6 +322,7 @@ $client->get_json( 'bachelorarbeiten' );
 $last = $GLOBALS['__last_request'];
 t_assert( isset( $last['args']['user-agent'] ) && false !== strpos( $last['args']['user-agent'], 'FAU-LIKE-like-json/' ), 'User-Agent is set on requests' );
 t_eq( 10, $last['args']['timeout'], 'timeout is set on requests' );
+t_eq( true, $last['args']['sslverify'], 'TLS certificate verification is enabled on requests' );
 
 // A runtime filter or legacy option cannot disable the timeout cap.
 test_reset();
@@ -402,6 +416,7 @@ t_assert( false === strpos( $pdf_link, 'data:application/pdf' ), 'link mode: no 
 
 // base64 mode with a successful fetch.
 test_reset();
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'https://example.test/json/', 'debuglogs' => true ) );
 // The pdf URL will be fetched. Queue a PDF response.
 test_queue_response( '%PDF-1.4 fake pdf content', 200 );
 $base64_html = $formatter->list( array( $record ), 'base64' );
@@ -420,6 +435,7 @@ t_eq( 'https://example.test/x.pdf', $embedded[0]['context']['url'], 'PDF embed l
 
 // base64 mode with failed fetch -> falls back to plain link.
 test_reset();
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'https://example.test/json/', 'debuglogs' => true ) );
 $base64_fail = $formatter->list( array( $record ), 'base64' );
 t_assert( false !== strpos( $base64_fail, 'href="https://example.test/x.pdf"' ), 'base64 mode fetch fail -> falls back to link' );
 $pdf_warn = like_json_test_get_log( 'warning' );
@@ -494,8 +510,17 @@ t_assert( false !== strpos( $html_timeout, 'role="alert"' ), 'timeout message is
 // the success and each failure path so the diagnosis stays regression-safe.
 echo "\n== Logging (RRZE-Log hooks) ==\n";
 
+// Debug logging is opt-in. Errors are always emitted.
+test_reset();
+Logger::info( 'debug info' );
+Logger::warning( 'debug warning' );
+Logger::error( 'always-on error' );
+t_eq( 1, count( like_json_test_get_log() ), 'debug logs are suppressed by default while errors remain' );
+t_eq( 'error', like_json_test_get_log()[0]['level'], 'errors remain enabled when debug logging is disabled' );
+
 // Successful fetch: info entries for the attempt and the received data.
 test_reset();
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'https://example.test/json/', 'debuglogs' => true ) );
 $client = new Client();
 test_queue_response( '[{"id":"1","titel":"T"}]', 200 );
 $client->get_json( 'bachelorarbeiten' );
@@ -563,6 +588,7 @@ t_assert( false !== strpos( $errors[0]['message'], 'zu große Antwort' ), 'overs
 
 // Cache hit: an info entry is emitted without any HTTP request.
 test_reset();
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'https://example.test/json/', 'debuglogs' => true ) );
 $client = new Client();
 test_queue_response( '[{"id":"1"}]', 200 );
 $client->get_json( 'bachelorarbeiten' );
@@ -582,6 +608,7 @@ t_eq( $queue_after_first, count( $GLOBALS['__http_queue'] ), 'cache hit makes no
 
 // No PII: log messages and context only contain URLs, statuses and counts.
 test_reset();
+update_option( Settings::OPTION_NAME, array( 'source_url' => 'https://example.test/json/', 'debuglogs' => true ) );
 $client = new Client();
 test_queue_response( '[{"id":"1","titel":"Geheimname","beschreibung":"Privatdaten"}]', 200 );
 $client->get_json( 'bachelorarbeiten' );

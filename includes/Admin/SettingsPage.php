@@ -117,6 +117,16 @@ class SettingsPage {
 					<p class="description"><?php echo esc_html__( 'RRZE-konformer User-Agent für automatisierte Abrufe.', 'like-json' ); ?></p>
 				</td>
 			</tr>
+			<tr>
+				<th scope="row"><?php echo esc_html__( 'Diagnose-Logging', 'like-json' ); ?></th>
+				<td>
+					<label for="like_json_debuglogs">
+						<input type="checkbox" id="like_json_debuglogs" name="<?php echo esc_attr( Settings::OPTION_NAME ); ?>[debuglogs]" value="1" <?php checked( ! empty( $settings['debuglogs'] ) ); ?> />
+						<?php echo esc_html__( 'Info- und Warnmeldungen in RRZE-Log schreiben', 'like-json' ); ?>
+					</label>
+					<p class="description"><?php echo esc_html__( 'Fehlermeldungen werden unabhängig von dieser Einstellung protokolliert.', 'like-json' ); ?></p>
+				</td>
+			</tr>
 		</table>
 		<?php
 	}

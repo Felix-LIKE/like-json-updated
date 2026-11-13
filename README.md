@@ -5,7 +5,7 @@
 WordPress-Plugin zur Darstellung der studentischen Arbeiten (Abschlussarbeiten) des
 Lehrstuhls für Informationstechnik mit dem Schwerpunkt Kommunikationselektronik (LIKE).
 
-**Version:** 2.1.1 · **Lizenz:** GPLv3 or later · **Sprache:** Deutsch / Englisch
+**Version:** 2.1.2 · **Lizenz:** GPLv3 or later · **Sprache:** Deutsch / Englisch
 
 > **Endnutzer-Dokumentation (webbasiert):** Dieses README ist die gepflegte, webbasierte
 > Benutzerdokumentation (siehe auch die [Plugin-Beschreibung](readme.txt)). Sie wird im
@@ -150,7 +150,7 @@ Es gibt keine netzwerkweiten Einstellungen und keine Vererbung zwischen Websites
 gemäß den [FAU-Crawler-Regeln](https://www.wp.rrze.fau.de/entwicklung/vorgaben/crawler/):
 
 ```
-FAU-LIKE-like-json/2.1.1 (+https://www.like.tf.fau.de/;mailto:like-admin@fau.de)
+FAU-LIKE-like-json/2.1.2 (+https://www.like.tf.fau.de/;mailto:like-admin@fau.de)
 ```
 
 **Caching:** Remote-Daten werden für 1 Stunde zwischengespeichert (Transient), um die Anzahl
@@ -158,8 +158,10 @@ der Anfragen zu begrenzen.
 
 ## Diagnose-Logging (RRZE-Log)
 
-Das Plugin sendet an allen Stellen, an denen es Verbindungen aufbaut, strukturierte
-Diagnose-Meldungen über die Hooks des [RRZE-Log](https://github.com/RRZE-Webteam/rrze-log)-Plugins:
+Das Plugin sendet Fehler an allen Stellen, an denen es Verbindungen aufbaut, über die Hooks
+des [RRZE-Log](https://github.com/RRZE-Webteam/rrze-log)-Plugins. Diagnose-Meldungen der
+Stufen `info` und `warning` sind standardmäßig deaktiviert und werden nur bei
+`debuglogs => true` ausgegeben:
 
 ```php
 do_action( 'rrze.log.info', $message, $context );
@@ -173,6 +175,12 @@ Kontext-Schlüssel `plugin => 'like-json'` und kann damit gefiltert werden, z. B
 
 ```php
 apply_filters( 'rrze.log.get', [ 'search' => [ 'like-json' ] ] );
+```
+
+Die Einstellung kann site-lokal gesetzt werden, zum Beispiel über den Filter:
+
+```php
+add_filter( 'like_json_setting_debuglogs', '__return_true' );
 ```
 
 Protokollierte Ereignisse (nur URLs, HTTP-Statuscodes, Byte-Zahlen und interne
@@ -200,8 +208,10 @@ Fehlerstatus – **keine** personenbezogenen Daten, keine Datensatz-Inhalte):
   externer Daten erzeugt.
 - **Validierung:** Remote-Antworten werden auf HTTP-Status und JSON-Struktur geprüft.
 - **Remote Requests:** Es wird ausschließlich die WordPress-HTTP-API verwendet (kein
-  `curl`/`file_get_contents` direkt). Die HTTPS-Verbindung wird mit einem mitgelieferten
-  Intermediate-Zertifikat (GEANT TLS ECC 1) aufgebaut. Bei einem HTTPS-Fehler wird der
+  `curl`/`file_get_contents` direkt). Die HTTPS-Verbindung wird mit dem von WordPress
+  gepflegten CA-Bundle geprüft. Bei cURL-Fehler 60 erfolgt einmalig ein erneuter Versuch
+  mit der vollständigen HARICA-CA-Kette; die TLS-Prüfung bleibt dabei aktiv. Bei einem
+  HTTPS-Fehler wird der
   Abruf abgebrochen; es erfolgt kein unsicherer Fallback auf HTTP.
 - **Same-Origin-Lock (SSRF-Härtung):** Das Plugin ruft ausschließlich HTTPS-URLs auf dem
   in „source_url" konfigurierten Host ab – sowohl für die JSON-Endpunkte als auch für
