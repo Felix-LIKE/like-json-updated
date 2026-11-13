@@ -459,5 +459,4 @@ class Client {
 		$certificates = dirname( __DIR__ ) . '/certs/HARICA-TLS-ECC-2021-chain.pem';
 		return is_readable( $certificates ) ? $certificates : '';
 	}
-
 }
