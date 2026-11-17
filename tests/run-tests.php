@@ -392,6 +392,8 @@ t_assert( false !== strpos( $list_html, '&lt;script&gt;' ), 'list: script escape
 t_assert( false !== strpos( $list_html, '<p>Beschreibung ' ), 'list: allowed <p> around description is kept' );
 t_assert( false !== strpos( $list_html, '<ul><li>Vor link</li></ul>' ), 'list: allowed <ul><li> list is kept, <a> stripped' );
 t_assert( false !== strpos( $list_html, '<ul><li>Aufgabe1</li><li>Aufgabe2</li></ul>' ), 'list: aufgaben renders its <ul><li> markup' );
+t_assert( false !== strpos( $list_html, '<b>Betreuende Person: </b>' ), 'list: betreuer field is labeled "Betreuende Person"' );
+t_assert( false === strpos( $list_html, '<b>Betreuer: </b>' ), 'list: old "Betreuer" label is no longer emitted' );
 t_assert( false !== strpos( $list_html, '<li class="like-json-item"><h2 class="like-json-title like-json-caption">' ), 'list: title is a heading in an outer list item' );
 t_assert( false !== strpos( $list_html, '</h2><ul class="like-json-record">' ), 'list: record details are nested below the title' );
 

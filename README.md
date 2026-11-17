@@ -75,7 +75,7 @@ Das Plugin stellt einen Gutenberg-Block **Studentische Arbeiten (LIKE)** bereit.
 | **Darstellung** | **Liste** oder **Akkordeon** (aufklappbare Einträge) |
 | **PDF-Ressourcen** | **Link** (empfohlen, verlinkt die PDF-Datei) oder **Base64 eingebettet** (PDF wird in die Seite eingebettet) |
 | **ID** | Nur die Arbeit mit dieser ID anzeigen (optional) |
-| **Betreuer** | Nur Arbeiten eines bestimmten Betreuers anzeigen (optional, Teilstring, Groß-/Kleinschreibung egal) |
+| **Betreuende Person** | Nur Arbeiten einer bestimmten betreuenden Person anzeigen (optional, Teilstring, Groß-/Kleinschreibung egal) |
 | **Status** | Nur Arbeiten mit diesem Vergabestatus anzeigen, z. B. `zu vergeben` (optional) |
 
 Der Block wird serverseitig gerendert; eine Vorschau erscheint direkt im Editor.
@@ -99,7 +99,7 @@ Für neue Inhalte verwenden Sie bitte den Gutenberg-Block.
 | `task` | `bachelorarbeiten`, `masterarbeiten`, `forschungspraktika`, `projektarbeiten`, `sonstiges`, `arbeiten-alle` | `bachelorarbeiten` |
 | `format` | `liste`, `accordion` | `liste` |
 | `id` | Nummer der Arbeit | leer |
-| `advisor` | Teilstring des Betreuers | leer |
+| `advisor` | Teilstring der betreuenden Person | leer |
 | `status` | Teilstring des Status | leer |
 | `ressources` | `link`, `base64` | `link` |
 
@@ -139,7 +139,7 @@ Es gibt keine netzwerkweiten Einstellungen und keine Vererbung zwischen Websites
 | **Anbieter** | Lehrstuhl für Informationstechnik mit dem Schwerpunkt Kommunikationselektronik (LIKE), FAU |
 | **URL** | `https://like35.like.e-technik.uni-erlangen.de/json/` (konfigurierbar) |
 | **Zweck** | Abruf der studentischen Arbeiten für die Anzeige auf der Website |
-| **Übertragene Daten** | Öffentliche Arbeitsdaten (Titel, Beschreibung, Betreuer, Status, PDF-Links) |
+| **Übertragene Daten** | Öffentliche Arbeitsdaten (Titel, Beschreibung, Betreuende Person, Status, PDF-Links) |
 | **Authentifizierung** | Keine (öffentliche Daten) |
 | **Timeout-Verhalten** | Timeout konfigurierbar (1–60 s, Standard 10 s); bei Zeitüberschreitung wird ein Hinweis angezeigt |
 | **Fehlerverhalten** | Bei nicht erreichbarer Quelle wird ein definierter Hinweis ausgegeben, die Website bleibt funktionsfähig |

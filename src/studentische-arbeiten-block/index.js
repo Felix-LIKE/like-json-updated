@@ -84,7 +84,7 @@ function Edit( { attributes, setAttributes } ) {
 						onChange={ ( value ) => setAttributes( { id: value } ) }
 					/>
 					<TextControl
-						label={ __( 'Betreuer (optional)', 'like-json' ) }
+						label={ __( 'Betreuende Person (optional)', 'like-json' ) }
 						value={ attributes.advisor }
 						onChange={ ( value ) =>
 							setAttributes( { advisor: value } )

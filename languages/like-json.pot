@@ -98,7 +98,7 @@ msgid "Voraussetzungen"
 msgstr ""
 
 #: includes/API/Formatter.php:166
-msgid "Betreuer"
+msgid "Betreuende Person"
 msgstr ""
 
 #: includes/API/Formatter.php:167
@@ -199,7 +199,7 @@ msgid "ID (optional)"
 msgstr ""
 
 #: src/studentische-arbeiten-block/index.js:87
-msgid "Betreuer (optional)"
+msgid "Betreuende Person (optional)"
 msgstr ""
 
 #: src/studentische-arbeiten-block/index.js:94

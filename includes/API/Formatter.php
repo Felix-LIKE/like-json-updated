@@ -171,7 +171,7 @@ class Formatter {
 			'beschreibung'  => __( 'Themenbeschreibung', 'like-json' ),
 			'kategorien'    => __( 'Themengebiete', 'like-json' ),
 			'voraussetzung' => __( 'Voraussetzungen', 'like-json' ),
-			'betreuer'      => __( 'Betreuer', 'like-json' ),
+			'betreuer'      => __( 'Betreuende Person', 'like-json' ),
 			'hs_lehrer'     => __( 'Hochschullehrer', 'like-json' ),
 			'aufgaben'      => __( 'Aufgaben', 'like-json' ),
 		);
