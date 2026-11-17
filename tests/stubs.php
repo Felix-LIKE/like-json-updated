@@ -266,6 +266,52 @@ function esc_html( $text ) {
 	return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
 }
 
+/**
+ * Minimal wp_kses() stub for tests.
+ *
+ * Approximates WordPress's kses for the subset the plugin relies on:
+ * - disallowed tags are removed (attributes always stripped), their inner
+ *   text is preserved;
+ * - allowed structural tags (p, br, ul, li) are kept without attributes;
+ * - text entities are decoded then special characters re-encoded.
+ *
+ * @param string $string             Input HTML.
+ * @param array  $allowed_html       Allowlist (tag => attributes).
+ * @param array  $allowed_protocols  Allowed URL protocols (unused in stub).
+ * @return string
+ */
+function wp_kses( $string, $allowed_html, $allowed_protocols = array() ) {
+	$string  = (string) $string;
+	$allowed = array();
+	foreach ( (array) $allowed_html as $tag => $attrs ) {
+		$allowed[ strtolower( $tag ) ] = true;
+	}
+
+	// Split into tags and text; sanitize each token like wp_kses() does.
+	return preg_replace_callback(
+		'#</?[a-zA-Z][a-zA-Z0-9]*\b[^>]*>|([^<]+)#',
+		function ( $match ) use ( $allowed ) {
+			$token = $match[0];
+
+			if ( 0 === strpos( $token, '<' ) ) {
+				if ( preg_match( '#^</?([a-zA-Z][a-zA-Z0-9]*)#', $token, $t ) ) {
+					$tag = strtolower( $t[1] );
+					if ( isset( $allowed[ $tag ] ) ) {
+						$closing = ( 0 === strpos( $token, '</' ) ) ? '</' : '<';
+						return $closing . $tag . '>';
+					}
+				}
+				return '';
+			}
+
+			// Text: decode entities, then re-encode special characters.
+			$text = html_entity_decode( $token, ENT_QUOTES, 'UTF-8' );
+			return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
+		},
+		$string
+	);
+}
+
 function wp_is_valid_utf8( $str ) {
 	return 1 === preg_match( '//u', $str );
 }

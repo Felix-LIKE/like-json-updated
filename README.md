@@ -5,7 +5,7 @@
 WordPress-Plugin zur Darstellung der studentischen Arbeiten (Abschlussarbeiten) des
 Lehrstuhls für Informationstechnik mit dem Schwerpunkt Kommunikationselektronik (LIKE).
 
-**Version:** 2.1.2 · **Lizenz:** GPLv3 or later · **Sprache:** Deutsch / Englisch
+**Version:** 2.2.0 · **Lizenz:** GPLv3 or later · **Sprache:** Deutsch / Englisch
 
 > **Endnutzer-Dokumentation (webbasiert):** Dieses README ist die gepflegte, webbasierte
 > Benutzerdokumentation (siehe auch die [Plugin-Beschreibung](readme.txt)). Sie wird im
@@ -150,7 +150,7 @@ Es gibt keine netzwerkweiten Einstellungen und keine Vererbung zwischen Websites
 gemäß den [FAU-Crawler-Regeln](https://www.wp.rrze.fau.de/entwicklung/vorgaben/crawler/):
 
 ```
-FAU-LIKE-like-json/2.1.2 (+https://www.like.tf.fau.de/;mailto:like-admin@fau.de)
+FAU-LIKE-like-json/2.2.0 (+https://www.like.tf.fau.de/;mailto:like-admin@fau.de)
 ```
 
 **Caching:** Remote-Daten werden für 1 Stunde zwischengespeichert (Transient), um die Anzahl
@@ -207,8 +207,12 @@ bei aktiviertem `debuglogs`:
 ## Sicherheit
 
 - **Escaping:** Alle Remote-Daten werden am Ausgabepunkt kontextgerecht escaped
-  (`esc_html()`, `esc_url()`, `esc_attr()`). Es wird keine ungefilterte HTML-Ausgabe
-  externer Daten erzeugt.
+  (`esc_html()`, `esc_url()`, `esc_attr()`). Die drei Langtext-Felder des Backends
+  (Themenbeschreibung, Voraussetzungen, Aufgaben) werden als WordPress-formatiertes HTML
+  geliefert und ausschließlich über eine **strenge `wp_kses()`-Allowlist** ausgegeben
+  (nur `<p>`, `<br>`, `<ul>`, `<li>` ohne Attribute). Alle anderen Tags, Attribute,
+  Event-Handler und `javascript:`-URLs werden entfernt. Es wird keine ungefilterte
+  HTML-Ausgabe externer Daten erzeugt.
 - **Validierung:** Remote-Antworten werden auf HTTP-Status und JSON-Struktur geprüft.
 - **Remote Requests:** Es wird ausschließlich die WordPress-HTTP-API verwendet (kein
   `curl`/`file_get_contents` direkt). Die HTTPS-Verbindung wird mit dem von WordPress

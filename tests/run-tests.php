@@ -28,7 +28,7 @@ require_once __DIR__ . '/stubs.php';
 
 // Constants normally defined in like-json.php; define them here for the test harness.
 if ( ! defined( 'LIKE_JSON_VERSION' ) ) {
-	define( 'LIKE_JSON_VERSION', '2.1.2' );
+	define( 'LIKE_JSON_VERSION', '2.2.0' );
 }
 if ( ! defined( 'LIKE_JSON_DIR' ) ) {
 	define( 'LIKE_JSON_DIR', dirname( __DIR__ ) . '/' );
@@ -92,15 +92,15 @@ function t_eq( $expected, $actual, $message ) {
  */
 function sample_record_malicious() {
 	return array(
-		'id'          => '999',
-		'titel'       => '<script>alert(1)</script>Titel',
-		'beschreibung'=> 'Beschreibung <img src=x onerror=alert(1)>',
-		'kategorien'  => 'Kat <b>fett</b>',
-		'voraussetzung'=> 'Vor <a href="javascript:alert(1)">link</a>',
-		'betreuer'    => 'Betreuer "quoted"',
-		'hs_lehrer'   => 'Prof <i>X</i>',
-		'aufgaben'    => 'Aufgabe1/Aufgabe2',
-		'pdf'         => 'https://example.test/x.pdf',
+		'id'           => '999',
+		'titel'        => '<script>alert(1)</script>Titel',
+		'beschreibung' => '<p>Beschreibung <img src=x onerror=alert(1)></p>',
+		'kategorien'   => 'Kat <b>fett</b>',
+		'voraussetzung'=> '<ul><li>Vor <a href="javascript:alert(1)">link</a></li></ul>',
+		'betreuer'     => 'Betreuer "quoted"',
+		'hs_lehrer'    => 'Prof <i>X</i>',
+		'aufgaben'     => '<ul><li>Aufgabe1</li><li>Aufgabe2</li></ul>',
+		'pdf'          => 'https://example.test/x.pdf',
 	);
 }
 
@@ -386,9 +386,12 @@ $record    = sample_record_malicious();
 
 $list_html = $formatter->list( array( $record ), 'link' );
 t_assert( false === strpos( $list_html, '<script>' ), 'list: <script> is escaped (no raw script tag)' );
-t_assert( false === strpos( $list_html, '<img' ), 'list: <img> tag is escaped (no raw image tag)' );
+t_assert( false === strpos( $list_html, '<img' ), 'list: <img> tag is stripped (no raw image tag)' );
 t_assert( false === strpos( $list_html, 'href="javascript:' ), 'list: javascript: not present as a real href attribute' );
 t_assert( false !== strpos( $list_html, '&lt;script&gt;' ), 'list: script escaped as entity' );
+t_assert( false !== strpos( $list_html, '<p>Beschreibung ' ), 'list: allowed <p> around description is kept' );
+t_assert( false !== strpos( $list_html, '<ul><li>Vor link</li></ul>' ), 'list: allowed <ul><li> list is kept, <a> stripped' );
+t_assert( false !== strpos( $list_html, '<ul><li>Aufgabe1</li><li>Aufgabe2</li></ul>' ), 'list: aufgaben renders its <ul><li> markup' );
 t_assert( false !== strpos( $list_html, '<li class="like-json-item"><h2 class="like-json-title like-json-caption">' ), 'list: title is a heading in an outer list item' );
 t_assert( false !== strpos( $list_html, '</h2><ul class="like-json-record">' ), 'list: record details are nested below the title' );
 
@@ -397,6 +400,37 @@ t_assert( false === strpos( $acc_html, '<script>' ), 'accordion: no raw script' 
 t_assert( false !== strpos( $acc_html, '&lt;script&gt;' ), 'accordion: script escaped as entity' );
 t_assert( false !== strpos( $acc_html, '<h2 class="like-json-heading">' ), 'accordion fallback: emits headings' );
 t_assert( false === strpos( $acc_html, '[collapse' ), 'accordion fallback: no legacy shortcode is emitted' );
+
+// Rich-text HTML from the backend renders as formatted HTML, not escaped text.
+$record_rich = array(
+	'id'           => '700',
+	'titel'        => 'Format Test',
+	'beschreibung' => '<p>Absatz eins.</p><p>Absatz zwei mit<br/>Umbruch.</p>',
+	'voraussetzung'=> '<ul><li>Vor 1</li><li>Vor 2</li></ul>',
+	'aufgaben'     => '<ul><li>T1</li><li>T2</li></ul>',
+);
+$rich_html = $formatter->list( array( $record_rich ), 'link' );
+t_assert( false !== strpos( $rich_html, '<p>Absatz eins.</p>' ), 'rich: first paragraph survives sanitization' );
+t_assert( false !== strpos( $rich_html, '<p>Absatz zwei mit<br' ), 'rich: <br/> is normalized to <br> (line break kept)' );
+t_assert( false !== strpos( $rich_html, 'Umbruch.</p>' ), 'rich: line break text is preserved' );
+t_assert( false !== strpos( $rich_html, '<ul><li>Vor 1</li><li>Vor 2</li></ul>' ), 'rich: voraussetzung list renders' );
+t_assert( false !== strpos( $rich_html, '<ul><li>T1</li><li>T2</li></ul>' ), 'rich: aufgaben list renders' );
+t_assert( false === strpos( $rich_html, '&lt;p&gt;' ), 'rich: paragraph tags are not escaped' );
+
+// Only the structural allowlist survives; attributes and other tags are dropped.
+$record_attrs = array(
+	'id'           => '701',
+	'titel'        => 'Attr Test',
+	'beschreibung' => '<p class="x" onclick="bad()">Safe <strong>text</strong> &amp; more</p>',
+	'aufgaben'     => '<ul><li><a href="https://evil.example">x</a>task</li></ul>',
+);
+$attrs_html = $formatter->list( array( $record_attrs ), 'link' );
+t_assert( false === strpos( $attrs_html, 'onclick=' ), 'attrs: event handler attribute is stripped' );
+t_assert( false === strpos( $attrs_html, 'class="x"' ), 'attrs: class attribute is stripped' );
+t_assert( false === strpos( $attrs_html, '<strong>' ), 'attrs: <strong> is not in the allowlist and is stripped' );
+t_assert( false === strpos( $attrs_html, 'href=' ), 'attrs: href attribute is stripped' );
+t_assert( false !== strpos( $attrs_html, '<p>Safe text &amp; more</p>' ), 'attrs: allowed <p> + plain text with decoded & survive' );
+t_assert( false !== strpos( $attrs_html, '<li>xtask</li>' ), 'attrs: <a> stripped, its text preserved in the list item' );
 
 // Active RRZE Elements Blocks uses the current Accordion block structure.
 test_reset();

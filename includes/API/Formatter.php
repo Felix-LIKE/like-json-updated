@@ -2,8 +2,11 @@
 /**
  * HTML formatter for student works.
  *
- * All remote data is treated as untrusted and escaped at output time with
- * esc_html() / esc_url(). Only PDF links are allowed (never HTML).
+ * All remote data is treated as untrusted. Plain-text fields are escaped at
+ * output time with esc_html() / esc_url(). The backend formats the long-text
+ * fields (Themenbeschreibung, Voraussetzungen, Aufgaben) as WordPress-style
+ * HTML (<p>, <br>, <ul><li>); these are sanitized with a strict allowlist via
+ * wp_kses() so only those structural tags survive. Only PDF links are allowed.
  *
  * @package LIKE_Json
  */
@@ -159,29 +162,29 @@ class Formatter {
 	 * @return string
 	 */
 	private function record_html( $record, $ressources ) {
+		// Long-text fields are delivered by the backend as WordPress-style HTML
+		// (<p>, <br>, <ul><li>) and are sanitized with a strict allowlist. All
+		// other fields are plain text and are escaped.
+		$html_fields = array( 'beschreibung', 'voraussetzung', 'aufgaben' );
+
 		$fields = array(
 			'beschreibung'  => __( 'Themenbeschreibung', 'like-json' ),
 			'kategorien'    => __( 'Themengebiete', 'like-json' ),
 			'voraussetzung' => __( 'Voraussetzungen', 'like-json' ),
 			'betreuer'      => __( 'Betreuer', 'like-json' ),
 			'hs_lehrer'     => __( 'Hochschullehrer', 'like-json' ),
+			'aufgaben'      => __( 'Aufgaben', 'like-json' ),
 		);
 
 		$html = '<ul class="like-json-record">';
 
 		foreach ( $fields as $key => $label ) {
 			if ( ! empty( $record[ $key ] ) ) {
-				$html .= '<li><b>' . esc_html( $label ) . ': </b>' . esc_html( $record[ $key ] ) . '</li>';
+				$value = in_array( $key, $html_fields, true )
+					? wp_kses( $record[ $key ], self::allowed_html() )
+					: esc_html( $record[ $key ] );
+				$html .= '<li><b>' . esc_html( $label ) . ': </b>' . $value . '</li>';
 			}
-		}
-
-		// Aufgaben (tasks) split by "/".
-		if ( ! empty( $record['aufgaben'] ) ) {
-			$html .= '<li><b>' . esc_html__( 'Aufgaben', 'like-json' ) . ': </b><ul>';
-			foreach ( explode( '/', $record['aufgaben'] ) as $aufgabe ) {
-				$html .= '<li>' . esc_html( $aufgabe ) . '</li>';
-			}
-			$html .= '</ul></li>';
 		}
 
 		// PDF link.
@@ -191,6 +194,25 @@ class Formatter {
 
 		$html .= '</ul>';
 		return $html;
+	}
+
+	/**
+	 * Allowlist of HTML tags accepted from the backend's rich-text fields.
+	 *
+	 * Only structural tags are allowed: paragraphs and line breaks for the
+	 * description, unordered lists for tasks and prerequisites. No attributes
+	 * (no href, no class, no event handlers) and no other tags survive, so the
+	 * output stays safe even if the source data is compromised.
+	 *
+	 * @return array
+	 */
+	private static function allowed_html() {
+		return array(
+			'p'  => array(),
+			'br' => array(),
+			'ul' => array(),
+			'li' => array(),
+		);
 	}
 
 	/**

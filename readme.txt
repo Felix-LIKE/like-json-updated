@@ -4,7 +4,7 @@ Tags: abschlussarbeiten, block, shortcode, university, research
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.1.2
+Stable tag: 2.2.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -51,6 +51,14 @@ With `ressources="link"` PDF files are provided as direct links instead of being
 embedded as base64 data. This saves bandwidth and is the recommended setting.
 
 == Changelog ==
+
+= 2.2.0 =
+* New: The backend now delivers the long-text fields (Themenbeschreibung,
+  Voraussetzungen, Aufgaben) as WordPress-formatted HTML (<p>, <br>, <ul><li>).
+  The plugin renders this markup sanitized through a strict wp_kses() allowlist
+  (only <p>, <br>, <ul>, <li> without attributes) and drops the legacy
+  "/"-splitting of the tasks field. All other fields remain fully escaped.
+  The legacy like35 server format is no longer supported.
 
 = 2.1.2 =
 * Fixed: Complete HARICA certificate chain retry for legacy CA stores on cURL error 60.
